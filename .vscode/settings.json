@@ -1,0 +1,10 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.formatOnSave": true, // Automatically formats on save
+  "editor.tabSize": 2, // Sets the tab size to 2 spaces
+  "editor.defaultFormatter": "esbenp.prettier-vscode", // Set Prettier as the default formatter
+  "prettier.printWidth": 100,
+  "prettier.trailingComma": "es5",
+  "editor.wordWrap": "on",
+  "editor.wordWrapColumn": 100 // Wrap lines at 80 characters (for readability)
+}
