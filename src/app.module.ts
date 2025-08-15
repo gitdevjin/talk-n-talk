@@ -6,6 +6,8 @@ import databaseConfig from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
 import { UserModule } from './user/user.module';
+import { ProfileModule } from './profile/profile.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { UserModule } from './user/user.module';
     }),
     CommonModule,
     UserModule,
+    ProfileModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
