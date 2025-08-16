@@ -1,7 +1,18 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { UserService } from './user.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { PinoLogger } from 'nestjs-pino';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly logger: PinoLogger
+  ) {}
+
+  @Post()
+  postCreateUser(@Body() body: CreateUserDto) {
+    this.logger.info(`Creating a new user in ${UserController.name}`);
+    return this.userService.createUser(body);
+  }
 }

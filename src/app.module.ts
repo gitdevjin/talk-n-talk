@@ -8,12 +8,28 @@ import { CommonModule } from './common/common.module';
 import { UserModule } from './user/user.module';
 import { ProfileModule } from './profile/profile.module';
 import { AuthModule } from './auth/auth.module';
+import { Profile } from './profile/entity/profile.entity';
+import { User } from './user/entity/user.entity';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig],
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: {
+          target: 'pino-pretty', // pretty logs in dev
+          options: {
+            colorize: true,
+            singleLine: false,
+            translateTime: 'SYS:standard',
+          },
+        },
+        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+      },
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -24,6 +40,7 @@ import { AuthModule } from './auth/auth.module';
           url: dbConfig.url,
           ssl: dbConfig.ssl,
           synchronize: dbConfig.synchronize,
+          entities: [User, Profile],
         };
       },
     }),

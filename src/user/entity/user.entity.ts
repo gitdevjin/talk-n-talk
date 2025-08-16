@@ -1,11 +1,13 @@
-import { BaseEntity, Column, Entity } from 'typeorm';
+import { BaseEntity } from 'src/common/entity/base.entity';
+import { Profile } from 'src/profile/entity/profile.entity';
+import { Column, Entity, OneToOne } from 'typeorm';
 
 export enum RolesEnum {
   USER = 'user',
   ADMIN = 'admin',
 }
 
-@Entity()
+@Entity('users')
 export class User extends BaseEntity {
   @Column({ unique: true })
   email: string;
@@ -22,4 +24,10 @@ export class User extends BaseEntity {
     default: RolesEnum.USER,
   })
   role: RolesEnum;
+
+  @Column({ nullable: true })
+  refreshToken: string;
+
+  @OneToOne(() => Profile, (profile) => profile.user)
+  profile: Profile;
 }
