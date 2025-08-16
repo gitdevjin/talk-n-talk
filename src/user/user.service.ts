@@ -37,7 +37,7 @@ export class UserService {
     });
 
     const newUser = await this.userRepository.save(user);
-    this.logger.debug('User Created');
+    this.logger.info(`User[${newUser.username}] Created in ${UserService.name}`);
     return newUser;
   }
 }

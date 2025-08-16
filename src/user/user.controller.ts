@@ -12,7 +12,7 @@ export class UserController {
 
   @Post()
   postCreateUser(@Body() body: CreateUserDto) {
-    this.logger.info(`Creating a new user in ${UserController.name}`);
+    this.logger.info(`Creating a new user[${body.username}] in ${UserController.name}`);
     return this.userService.createUser(body);
   }
 }

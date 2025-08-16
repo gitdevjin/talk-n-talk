@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import databaseConfig from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
 import { UserModule } from './user/user.module';
@@ -11,12 +10,15 @@ import { AuthModule } from './auth/auth.module';
 import { Profile } from './profile/entity/profile.entity';
 import { User } from './user/entity/user.entity';
 import { LoggerModule } from 'nestjs-pino';
+import databaseConfig from './config/database.config';
+import jwtConfig from './config/jwt.config';
+import authConfig from './config/auth.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
+      load: [databaseConfig, jwtConfig, authConfig],
     }),
     LoggerModule.forRoot({
       pinoHttp: {
