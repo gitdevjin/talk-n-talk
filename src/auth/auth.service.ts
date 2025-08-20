@@ -1,12 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { JwtConfig } from 'src/config/jwt.config';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entity/user.entity';
+import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcrypt';
+import { AuthConfig } from 'src/config/auth.config';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService
   ) {}
@@ -64,5 +69,68 @@ export class AuthService {
    * @returns The authenticated user object if credentials are valid
    * @throws UnauthorizedException if the user does not exist or password is invalid
    */
-  authenticateUser();
+  private async authenticateUser(user: Pick<User, 'email' | 'password'>) {
+    const userRecord = await this.userService.getUserByEmail(user.email);
+
+    if (!userRecord) {
+      throw new UnauthorizedException('Invalid Email');
+    }
+
+    const isPasswordValid = await bcrypt.compare(user.password, userRecord.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    return userRecord;
+  }
+
+  async registerWithEmail(user: CreateUserDto) {
+    const hash = await bcrypt.hash(
+      user.password,
+      this.configService.get<AuthConfig>('hash').hashRounds
+    );
+
+    const newUser = await this.userService.createUser({
+      ...user,
+      password: hash,
+    });
+
+    const tokens = this.generateTokens(newUser);
+
+    await this.userService.updateRefreshToken(newUser.id, tokens.refreshToken);
+
+    return tokens;
+  }
+
+  async loginWithEmail(user: Pick<User, 'email' | 'password'>) {
+    const userRecord = await this.authenticateUser(user);
+
+    const tokens = this.generateTokens(userRecord);
+
+    await this.userService.updateRefreshToken(userRecord.id, tokens.refreshToken);
+
+    return tokens;
+  }
+
+  async decodeBasicToken(base64Credential: string) {
+    const decodedCredential = Buffer.from(base64Credential, 'base64').toString('utf8');
+
+    const separatorIdx = decodedCredential.indexOf(':');
+
+    if (separatorIdx === -1) {
+      throw new UnauthorizedException(
+        'Invalid Basic authentication format. Expected "email:password".'
+      );
+    }
+
+    const email = decodedCredential.slice(0, separatorIdx);
+    const password = decodedCredential.slice(separatorIdx + 1);
+
+    if (!email || !password) {
+      throw new UnauthorizedException('Email or password cannot be empty in Basic authentication.');
+    }
+
+    return { email, password };
+  }
 }

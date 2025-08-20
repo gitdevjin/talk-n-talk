@@ -6,7 +6,7 @@ export interface JwtConfig {
   refreshTokenTtl: string;
 }
 
-export default registerAs('jwt', (): JwtConfig => {
+export default registerAs<JwtConfig>('jwt', () => {
   return {
     secret: process.env.JWT_SECRET,
     accessTokenTtl: process.env.JWT_ACCESS_TTL || '3600s',
