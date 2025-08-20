@@ -25,7 +25,7 @@ export class AuthService {
 
     const [scheme, token] = splitAuthHeader;
 
-    if (scheme.toLowerCase()! == expectedScheme) {
+    if (scheme.toLowerCase() !== expectedScheme) {
       throw new BadRequestException('Invalid authentication scheme');
     }
 
@@ -88,7 +88,7 @@ export class AuthService {
   async registerWithEmail(user: CreateUserDto) {
     const hash = await bcrypt.hash(
       user.password,
-      this.configService.get<AuthConfig>('hash').hashRounds
+      this.configService.get<AuthConfig>('auth').hashRounds
     );
 
     const newUser = await this.userService.createUser({
@@ -113,7 +113,7 @@ export class AuthService {
     return tokens;
   }
 
-  async decodeBasicToken(base64Credential: string) {
+  decodeBasicToken(base64Credential: string) {
     const decodedCredential = Buffer.from(base64Credential, 'base64').toString('utf8');
 
     const separatorIdx = decodedCredential.indexOf(':');
