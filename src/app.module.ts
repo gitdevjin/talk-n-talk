@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { Profile } from './profile/entity/profile.entity';
 import { User } from './user/entity/user.entity';
 import { LoggerModule } from 'nestjs-pino';
+import { ChatModule } from './chat/chat.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import authConfig from './config/auth.config';
@@ -50,6 +51,7 @@ import authConfig from './config/auth.config';
     UserModule,
     ProfileModule,
     AuthModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,6 +7,7 @@ import { User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { AuthConfig } from 'src/config/auth.config';
+import { QueryRunner } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -85,20 +86,23 @@ export class AuthService {
     return userRecord;
   }
 
-  async registerWithEmail(user: CreateUserDto) {
+  async registerWithEmail(user: CreateUserDto, qr?: QueryRunner) {
     const hash = await bcrypt.hash(
       user.password,
       this.configService.get<AuthConfig>('auth').hashRounds
     );
 
-    const newUser = await this.userService.createUser({
-      ...user,
-      password: hash,
-    });
+    const newUser = await this.userService.createUser(
+      {
+        ...user,
+        password: hash,
+      },
+      qr
+    );
 
     const tokens = this.generateTokens(newUser);
 
-    await this.userService.updateRefreshToken(newUser.id, tokens.refreshToken);
+    await this.userService.updateRefreshToken(newUser.id, tokens.refreshToken, qr);
 
     return tokens;
   }

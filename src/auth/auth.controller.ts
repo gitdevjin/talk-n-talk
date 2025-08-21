@@ -1,7 +1,10 @@
-import { Body, Controller, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Headers, Post, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction.interceptor';
+import { TxQueryRunner } from 'src/common/decorator/query-runner.decorator';
+import { QueryRunner } from 'typeorm';
 
 @Controller('auth')
 export class AuthController {
@@ -17,7 +20,8 @@ export class AuthController {
   }
 
   @Post('register/email')
-  postRegisterWithEmail(@Body() body: CreateUserDto) {
-    return this.authService.registerWithEmail(body);
+  @UseInterceptors(TransactionInterceptor)
+  postRegisterWithEmail(@Body() body: CreateUserDto, @TxQueryRunner() qr: QueryRunner) {
+    return this.authService.registerWithEmail(body, qr);
   }
 }

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PinoLogger } from 'nestjs-pino';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -18,6 +18,10 @@ export class UserService {
     private readonly logger: PinoLogger
   ) {}
 
+  getRepository(qr?: QueryRunner) {
+    return qr ? qr.manager.getRepository<User>(User) : this.userRepository;
+  }
+
   async getUserByEmail(email: string) {
     return this.userRepository.findOne({
       where: {
@@ -26,13 +30,14 @@ export class UserService {
     });
   }
 
-  async createUser(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto, qr?: QueryRunner) {
+    const repository = this.getRepository(qr);
     const { email, username, password } = createUserDto;
 
     // Check if username or email already exists
     const [isUsernameTaken, isEmailTaken] = await Promise.all([
-      this.userRepository.exists({ where: { username } }),
-      this.userRepository.exists({ where: { email } }),
+      repository.exists({ where: { username } }),
+      repository.exists({ where: { email } }),
     ]);
 
     if (isUsernameTaken) {
@@ -44,30 +49,33 @@ export class UserService {
     }
 
     // Create user entity
-    const user = this.userRepository.create({
+    const user = repository.create({
       email,
       username,
       password,
     });
 
-    const newUser = await this.userRepository.save(user);
+    const newUser = await repository.save(user);
     this.logger.info(`User[${newUser.username}] Created in ${UserService.name}`);
     return newUser;
   }
 
   async updateUser(userId: string, dto: UpdateUserDto) {}
 
-  async updateRefreshToken(userId: string, refreshToken: string) {
+  async updateRefreshToken(userId: string, refreshToken: string, qr?: QueryRunner) {
+    const repository = this.getRepository(qr);
     const hashedToken = await bcrypt.hash(
       refreshToken,
       this.configService.get<AuthConfig>('auth').hashRounds
     );
 
-    const result = await this.userRepository.update(userId, { refreshToken: hashedToken });
+    const result = await repository.update(userId, { refreshToken: hashedToken });
 
     if (result.affected === 0) {
       this.logger.warn(`Failed to update refresh token for userId: ${userId}`);
       throw new InternalServerErrorException('Refresh token update failed');
     }
+
+    return true;
   }
 }
