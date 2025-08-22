@@ -1,13 +1,22 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { JwtConfig } from 'src/config/jwt.config';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { User } from 'src/user/entity/user.entity';
+import { RolesEnum, User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { AuthConfig } from 'src/config/auth.config';
 import { QueryRunner } from 'typeorm';
+
+export interface JwtPayload {
+  userId: string;
+  email: string;
+  role: RolesEnum;
+  iat?: number; // issued at (auto-added by JWT)
+  exp?: number; // expiration (auto-added by JWT)
+  nbf?: number; // not before (optional)
+}
 
 @Injectable()
 export class AuthService {
@@ -40,7 +49,7 @@ export class AuthService {
    * @param tokenType - Either 'access' or 'refresh' to determine token type
    * @returns A signed JWT string
    */
-  signToken(user: Pick<User, 'email' | 'id'>, tokenType: 'access' | 'refresh') {
+  private signToken(user: Pick<User, 'email' | 'id'>, tokenType: 'access' | 'refresh') {
     const jwtConfig: JwtConfig = this.configService.get<JwtConfig>('jwt');
     const { secret, accessTokenTtl, refreshTokenTtl } = jwtConfig;
 
@@ -56,11 +65,57 @@ export class AuthService {
     });
   }
 
-  generateTokens(user: Pick<User, 'email' | 'id'>) {
+  private generateTokens(user: Pick<User, 'email' | 'id'>) {
     return {
       accessToken: this.signToken(user, 'access'),
       refreshToken: this.signToken(user, 'refresh'),
     };
+  }
+
+  /**
+   * Verifies a JWT token and returns its payload.
+   *
+   * @param token - The JWT string to verify
+   * @returns The decoded JWT payload if the token is valid
+   * @throws UnauthorizedException if the token is invalid or expired
+   */
+  verifyToken(token: string): JwtPayload {
+    try {
+      return this.jwtService.verify(token, {
+        secret: this.configService.get<JwtConfig>('jwt').secret,
+      });
+    } catch (err) {
+      throw new UnauthorizedException(err.message || 'Token verification failed');
+    }
+  }
+
+  /**
+   * Registers a new user with email and password.
+   *
+   * @param user - The DTO containing user registration details
+   * @param qr - Optional TypeORM QueryRunner for transactional support
+   * @returns An object containing access and refresh tokens for the new user
+   * @throws BadRequestException if registration fails
+   */
+  async registerWithEmail(user: CreateUserDto, qr?: QueryRunner) {
+    const hash = await bcrypt.hash(
+      user.password,
+      this.configService.get<AuthConfig>('auth').hashRounds
+    );
+
+    const newUser = await this.userService.createUser(
+      {
+        ...user,
+        password: hash,
+      },
+      qr
+    );
+
+    const tokens = this.generateTokens(newUser);
+
+    await this.userService.updateRefreshToken(newUser.id, tokens.refreshToken, qr);
+
+    return tokens;
   }
 
   /**
@@ -86,27 +141,13 @@ export class AuthService {
     return userRecord;
   }
 
-  async registerWithEmail(user: CreateUserDto, qr?: QueryRunner) {
-    const hash = await bcrypt.hash(
-      user.password,
-      this.configService.get<AuthConfig>('auth').hashRounds
-    );
-
-    const newUser = await this.userService.createUser(
-      {
-        ...user,
-        password: hash,
-      },
-      qr
-    );
-
-    const tokens = this.generateTokens(newUser);
-
-    await this.userService.updateRefreshToken(newUser.id, tokens.refreshToken, qr);
-
-    return tokens;
-  }
-
+  /**
+   * Logs in a user using email and password credentials.
+   *
+   * @param user - An object containing the user's email and password
+   * @returns An object containing access and refresh tokens for the authenticated user
+   * @throws UnauthorizedException if authentication fails
+   */
   async loginWithEmail(user: Pick<User, 'email' | 'password'>) {
     const userRecord = await this.authenticateUser(user);
 

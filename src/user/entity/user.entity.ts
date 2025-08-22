@@ -1,6 +1,7 @@
+import { ChatRoomMember } from 'src/chat/entity/chatroom-member.dto';
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { Profile } from 'src/profile/entity/profile.entity';
-import { Column, Entity, OneToOne } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 
 export enum RolesEnum {
   USER = 'user',
@@ -30,4 +31,7 @@ export class User extends BaseEntity {
 
   @OneToOne(() => Profile, (profile) => profile.user)
   profile: Profile;
+
+  @OneToMany(() => ChatRoomMember, (chatRoomMember) => chatRoomMember.user)
+  chatrooms: ChatRoomMember[];
 }
