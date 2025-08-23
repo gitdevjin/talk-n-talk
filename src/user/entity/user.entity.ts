@@ -1,4 +1,4 @@
-import { ChatRoomMember } from 'src/chat/entity/chatroom-member.dto';
+import { ChatRoomMember } from 'src/chat/entity/chatroom-member.entity';
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { Profile } from 'src/profile/entity/profile.entity';
 import { Column, Entity, OneToMany, OneToOne } from 'typeorm';

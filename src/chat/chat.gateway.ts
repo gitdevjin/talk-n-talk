@@ -12,7 +12,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/entity/user.entity';
 
-@WebSocketGateway({ namespace: 'chat' })
+@WebSocketGateway({ namespace: 'chats' })
 export class ChatGateway implements OnGatewayConnection {
   constructor(
     private readonly chatService: ChatService,
@@ -47,7 +47,7 @@ export class ChatGateway implements OnGatewayConnection {
     } catch (err) {
       client.disconnect();
 
-      this.logger.info({ clientId: client.id }, 'Client connection failed');
+      this.logger.warn({ clientId: client.id }, 'Client connection failed');
 
       throw new WsException(err.message || 'WebSocket Connection Authentication Error');
     }

@@ -18,7 +18,7 @@ export class UserService {
     private readonly logger: PinoLogger
   ) {}
 
-  getRepository(qr?: QueryRunner) {
+  private getRepository(qr?: QueryRunner) {
     return qr ? qr.manager.getRepository<User>(User) : this.userRepository;
   }
 

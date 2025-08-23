@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
-import { ChatRoomMember } from './chatroom-member.dto';
+import { ChatRoomMember } from './chatroom-member.entity';
 
 @Entity('ChatRooms')
 export class ChatRoom extends BaseEntity {
@@ -13,6 +13,6 @@ export class ChatRoom extends BaseEntity {
   @Column({ nullable: true })
   dmKey?: string;
 
-  @OneToMany(() => ChatRoomMember, (chatRoomMember) => chatRoomMember.room)
+  @OneToMany(() => ChatRoomMember, (chatRoomMember) => chatRoomMember.room, { cascade: ['insert'] })
   members: ChatRoomMember[];
 }

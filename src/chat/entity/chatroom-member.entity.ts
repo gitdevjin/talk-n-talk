@@ -1,6 +1,7 @@
 import { User } from 'src/user/entity/user.entity';
-import { BaseEntity, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import { ChatRoom } from './chatroom.dto';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { ChatRoom } from './chatroom.entity';
+import { BaseEntity } from 'src/common/entity/base.entity';
 
 @Entity('ChatRoomMembers')
 export class ChatRoomMember extends BaseEntity {

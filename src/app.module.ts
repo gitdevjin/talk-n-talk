@@ -14,6 +14,8 @@ import { ChatModule } from './chat/chat.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import authConfig from './config/auth.config';
+import { ChatRoom } from './chat/entity/chatroom.entity';
+import { ChatRoomMember } from './chat/entity/chatroom-member.entity';
 
 @Module({
   imports: [
@@ -43,7 +45,7 @@ import authConfig from './config/auth.config';
           url: dbConfig.url,
           ssl: dbConfig.ssl,
           synchronize: dbConfig.synchronize,
-          entities: [User, Profile],
+          entities: [User, Profile, ChatRoom, ChatRoomMember],
         };
       },
     }),
