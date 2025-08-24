@@ -5,9 +5,11 @@ import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from 'src/user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatRoom } from './entity/chatroom.entity';
+import { ChatController } from './chat.controller';
 
 @Module({
   imports: [AuthModule, UserModule],
+  controllers: [ChatController],
   providers: [ChatGateway, ChatService],
   exports: [ChatService],
 })

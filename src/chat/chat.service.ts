@@ -3,12 +3,16 @@ import { BaseEntity } from 'src/common/entity/base.entity';
 import { DataSource, EntityTarget, In, QueryRunner, Repository } from 'typeorm';
 import { ChatRoom } from './entity/chatroom.entity';
 import { ChatRoomMember } from './entity/chatroom-member.entity';
-import { CreatGroupChatDto } from './dto/create-chatroom.dto';
+import { CreateGroupChatDto } from './dto/create-chatroom.dto';
 import { User } from 'src/user/entity/user.entity';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly logger: PinoLogger
+  ) {}
 
   private getRepository<T extends BaseEntity>(
     entity: EntityTarget<T>,
@@ -17,7 +21,7 @@ export class ChatService {
     return qr ? qr.manager.getRepository<T>(entity) : this.dataSource.getRepository<T>(entity);
   }
 
-  async createGroupChat(dto: CreatGroupChatDto, qr?: QueryRunner) {
+  async createGroupChat(dto: CreateGroupChatDto, qr?: QueryRunner) {
     const chatRoomRepository = this.getRepository(ChatRoom, qr);
     const userRepository = this.getRepository(User, qr);
 
@@ -43,6 +47,15 @@ export class ChatService {
     // - If no QueryRunner is provided, TypeORM saves normally:
     //   ⚠️ Each insert happens individually; partial data could persist if an error occurs
     const newChatRoom = await chatRoomRepository.save(chatRoom);
+
+    this.logger.info(
+      {
+        chatRoomId: newChatRoom.id,
+        memberIds: newChatRoom.members.map((m) => m.userId),
+        totalMembers: newChatRoom.members.length,
+      },
+      'New ChatRoom created'
+    );
 
     return newChatRoom;
   }
