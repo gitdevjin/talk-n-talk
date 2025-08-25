@@ -1,5 +1,8 @@
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
   WsException,
@@ -11,8 +14,11 @@ import { PinoLogger } from 'nestjs-pino';
 import { AuthService } from 'src/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/entity/user.entity';
+import { UseFilters } from '@nestjs/common';
+import { WsExecptionFilter } from './filter/ws-exception.filter';
 
 @WebSocketGateway({ namespace: 'chats' })
+@UseFilters(WsExecptionFilter)
 export class ChatGateway implements OnGatewayConnection {
   constructor(
     private readonly chatService: ChatService,
@@ -46,10 +52,26 @@ export class ChatGateway implements OnGatewayConnection {
       return true;
     } catch (err) {
       client.disconnect();
-
       this.logger.warn({ clientId: client.id }, 'Client connection failed');
-
       throw new WsException(err.message || 'WebSocket Connection Authentication Error');
     }
+  }
+
+  @SubscribeMessage('joinRoom')
+  async handleJoinRoom(
+    @MessageBody() body: { roomId: string },
+    @ConnectedSocket() client: Socket & { user: User }
+  ) {
+    const isMember = await this.chatService.isChatMember(client.user.id, body.roomId);
+
+    if (!isMember) {
+      this.logger.warn({ clientId: client.id, roomId: body.roomId }, 'Joining the Room Failed');
+      throw new WsException(`Unauthroized to join this room`);
+    }
+
+    client.join(body.roomId);
+    this.logger.info({ clientId: client.id, roomId: body.roomId }, 'Client Joined the Room');
+
+    return { status: 'success', roomId: body.roomId };
   }
 }

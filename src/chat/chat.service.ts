@@ -62,4 +62,15 @@ export class ChatService {
 
     return newChatRoom;
   }
+
+  async isChatMember(userId: string, roomId: string) {
+    const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember);
+
+    return await roomMemberRepository.exists({
+      where: {
+        userId,
+        roomId,
+      },
+    });
+  }
 }
