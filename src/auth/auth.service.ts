@@ -8,11 +8,13 @@ import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { AuthConfig } from 'src/config/auth.config';
 import { QueryRunner } from 'typeorm';
+import * as ms from 'ms';
+import { CookieOptions } from 'express';
 
 export interface JwtPayload {
-  userId: string;
+  sub: string;
   email: string;
-  role: RolesEnum;
+  type: string;
   iat?: number; // issued at (auto-added by JWT)
   exp?: number; // expiration (auto-added by JWT)
   nbf?: number; // not before (optional)
@@ -155,7 +157,16 @@ export class AuthService {
 
     await this.userService.updateRefreshToken(userRecord.id, tokens.refreshToken);
 
-    return tokens;
+    const ttl = this.configService.get<JwtConfig>('jwt').refreshTokenTtl;
+
+    const cookieOptions: CookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' ? true : false,
+      sameSite: 'strict',
+      maxAge: ms(ttl as ms.StringValue),
+    };
+
+    return { ...tokens, cookieOptions };
   }
 
   decodeBasicToken(base64Credential: string) {

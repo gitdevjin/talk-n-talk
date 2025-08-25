@@ -16,6 +16,8 @@ import jwtConfig from './config/jwt.config';
 import authConfig from './config/auth.config';
 import { ChatRoom } from './chat/entity/chatroom.entity';
 import { ChatRoomMember } from './chat/entity/chatroom-member.entity';
+import { APP_GUARD } from '@nestjs/core';
+import { GlobalTokenGuard } from './auth/guard/global-token.guard';
 
 @Module({
   imports: [
@@ -56,6 +58,12 @@ import { ChatRoomMember } from './chat/entity/chatroom-member.entity';
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: GlobalTokenGuard,
+    },
+  ],
 })
 export class AppModule {}

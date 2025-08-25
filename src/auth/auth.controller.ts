@@ -1,25 +1,36 @@
-import { Body, Controller, Headers, Post, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Headers, Post, Res, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
-
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction.interceptor';
 import { TxQueryRunner } from 'src/common/decorator/query-runner.decorator';
 import { QueryRunner } from 'typeorm';
+import { Response } from 'express';
+import { AccessType } from 'src/common/decorator/access-type.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login/email')
-  postLoginWithEmail(@Headers('authorization') authHeaer: string) {
-    const base64String = this.authService.extractTokenFromHeader(authHeaer, 'basic');
+  @AccessType('public')
+  async postLoginWithEmail(
+    @Res({ passthrough: true }) res: Response,
+    @Headers('authorization') authHeader: string
+  ) {
+    const base64String = this.authService.extractTokenFromHeader(authHeader, 'basic');
 
     const credentials = this.authService.decodeBasicToken(base64String);
 
-    return this.authService.loginWithEmail(credentials);
+    const { accessToken, refreshToken, cookieOptions } =
+      await this.authService.loginWithEmail(credentials);
+
+    res.cookie('refreshToken', refreshToken, cookieOptions);
+
+    return { accessToken };
   }
 
   @Post('register/email')
+  @AccessType('public')
   @UseInterceptors(TransactionInterceptor)
   postRegisterWithEmail(@Body() body: CreateUserDto, @TxQueryRunner() qr: QueryRunner) {
     return this.authService.registerWithEmail(body, qr);

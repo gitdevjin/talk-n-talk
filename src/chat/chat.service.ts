@@ -21,17 +21,20 @@ export class ChatService {
     return qr ? qr.manager.getRepository<T>(entity) : this.dataSource.getRepository<T>(entity);
   }
 
-  async createGroupChat(dto: CreateGroupChatDto, qr?: QueryRunner) {
+  async createGroupChat(dto: CreateGroupChatDto, creator: User, qr?: QueryRunner) {
     const chatRoomRepository = this.getRepository(ChatRoom, qr);
     const userRepository = this.getRepository(User, qr);
 
+    const memberIds = new Set(dto.memberIds);
+    memberIds.add(creator.id);
+
     const users = await userRepository.find({
       where: {
-        id: In(dto.memberIds),
+        id: In([...memberIds]),
       },
     });
 
-    if (users.length !== dto.memberIds.length) {
+    if (users.length !== memberIds.size) {
       throw new BadRequestException('One or more memberIds are invalid');
     }
 
