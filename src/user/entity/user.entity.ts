@@ -1,4 +1,5 @@
 import { ChatRoomMember } from 'src/chat/entity/chatroom-member.entity';
+import { Message } from 'src/chat/message/entity/message.entity';
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { Profile } from 'src/profile/entity/profile.entity';
 import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
@@ -34,4 +35,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => ChatRoomMember, (chatRoomMember) => chatRoomMember.user)
   chatrooms: ChatRoomMember[];
+
+  @OneToMany(() => Message, (message) => message.sender)
+  messages: Message[];
 }

@@ -18,6 +18,7 @@ import { ChatRoom } from './chat/entity/chatroom.entity';
 import { ChatRoomMember } from './chat/entity/chatroom-member.entity';
 import { APP_GUARD } from '@nestjs/core';
 import { GlobalTokenGuard } from './auth/guard/global-token.guard';
+import { Message } from './chat/message/entity/message.entity';
 
 @Module({
   imports: [
@@ -47,7 +48,7 @@ import { GlobalTokenGuard } from './auth/guard/global-token.guard';
           url: dbConfig.url,
           ssl: dbConfig.ssl,
           synchronize: dbConfig.synchronize,
-          entities: [User, Profile, ChatRoom, ChatRoomMember],
+          entities: [User, Profile, ChatRoom, ChatRoomMember, Message],
         };
       },
     }),
