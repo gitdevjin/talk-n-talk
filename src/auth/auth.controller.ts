@@ -5,14 +5,15 @@ import { TransactionInterceptor } from 'src/common/interceptor/transaction.inter
 import { TxQueryRunner } from 'src/common/decorator/query-runner.decorator';
 import { QueryRunner } from 'typeorm';
 import { Response } from 'express';
-import { AccessType } from 'src/common/decorator/access-type.decorator';
+import { AccessTokenType } from 'src/common/decorator/access-type.decorator';
+import * as ms from 'ms';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login/email')
-  @AccessType('public')
+  @AccessTokenType('public')
   async postLoginWithEmail(
     @Res({ passthrough: true }) res: Response,
     @Headers('authorization') authHeader: string
@@ -25,12 +26,16 @@ export class AuthController {
       await this.authService.loginWithEmail(credentials);
 
     res.cookie('refreshToken', refreshToken, cookieOptions);
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
+      maxAge: ms('1h'),
+    });
 
     return { accessToken };
   }
 
   @Post('register/email')
-  @AccessType('public')
+  @AccessTokenType('public')
   @UseInterceptors(TransactionInterceptor)
   postRegisterWithEmail(@Body() body: CreateUserDto, @TxQueryRunner() qr: QueryRunner) {
     return this.authService.registerWithEmail(body, qr);

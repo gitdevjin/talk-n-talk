@@ -2,6 +2,9 @@ import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PinoLogger } from 'nestjs-pino';
+import { AccessTokenType } from 'src/common/decorator/access-type.decorator';
+import { CurrentUser } from './decorator/user.decorator';
+import { User } from './entity/user.entity';
 
 @Controller('users')
 export class UserController {
@@ -15,8 +18,9 @@ export class UserController {
     return this.userService.createUser(body);
   }
 
-  @Get()
-  getUser(@Body('email') email: string) {
-    return this.userService.getUserByEmail(email);
+  @Get('me')
+  @AccessTokenType('access')
+  getUser(@CurrentUser() user: User) {
+    return this.userService.getUserByEmail(user.email);
   }
 }

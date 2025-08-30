@@ -14,6 +14,6 @@ export class Profile extends BaseEntity {
   avatar?: string;
 
   @OneToOne(() => User, (user) => user.profile)
-  @JoinColumn()
+  @JoinColumn({ name: 'userId' })
   user: User;
 }

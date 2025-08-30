@@ -8,12 +8,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { AuthConfig } from 'src/config/auth.config';
 import * as bcrypt from 'bcrypt';
+import { ProfileService } from 'src/profile/profile.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly profileService: ProfileService,
     private readonly configService: ConfigService,
     private readonly logger: PinoLogger
   ) {}
@@ -26,6 +28,9 @@ export class UserService {
     return this.userRepository.findOne({
       where: {
         email,
+      },
+      relations: {
+        profile: true,
       },
     });
   }
@@ -56,6 +61,9 @@ export class UserService {
     });
 
     const newUser = await repository.save(user);
+    const profile = await this.profileService.createProfile(newUser, qr);
+    newUser.profile = profile;
+
     this.logger.info(`User[${newUser.username}] Created in ${UserService.name}`);
     return newUser;
   }

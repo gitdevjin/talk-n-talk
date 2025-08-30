@@ -92,14 +92,17 @@ export class AuthService {
   }
 
   /**
-   * Registers a new user with email and password.
+   * Registers a new user using email and password.
    *
-   * @param user - The DTO containing user registration details
+   * Hashes the user's password, creates a new user record in the database,
+   * and supports transactional registration via an optional QueryRunner.
+   *
+   * @param user - The DTO containing user registration details (email, password, etc.)
    * @param qr - Optional TypeORM QueryRunner for transactional support
-   * @returns An object containing access and refresh tokens for the new user
-   * @throws BadRequestException if registration fails
+   * @returns The newly created User entity
+   * @throws BadRequestException if registration fails or input is invalid
    */
-  async registerWithEmail(user: CreateUserDto, qr?: QueryRunner) {
+  async registerWithEmail(user: CreateUserDto, qr?: QueryRunner): Promise<User> {
     const hash = await bcrypt.hash(
       user.password,
       this.configService.get<AuthConfig>('auth').hashRounds
@@ -113,11 +116,7 @@ export class AuthService {
       qr
     );
 
-    const tokens = this.generateTokens(newUser);
-
-    await this.userService.updateRefreshToken(newUser.id, tokens.refreshToken, qr);
-
-    return tokens;
+    return newUser;
   }
 
   /**
@@ -127,7 +126,7 @@ export class AuthService {
    * @returns The authenticated user object if credentials are valid
    * @throws UnauthorizedException if the user does not exist or password is invalid
    */
-  private async authenticateUser(user: Pick<User, 'email' | 'password'>) {
+  private async authenticateUser(user: Pick<User, 'email' | 'password'>): Promise<User> {
     const userRecord = await this.userService.getUserByEmail(user.email);
 
     if (!userRecord) {
@@ -161,8 +160,8 @@ export class AuthService {
 
     const cookieOptions: CookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' ? true : false,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: ms(ttl as ms.StringValue),
     };
 

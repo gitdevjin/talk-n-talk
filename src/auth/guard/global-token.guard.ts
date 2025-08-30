@@ -36,7 +36,7 @@ export class GlobalTokenGuard implements CanActivate {
     const payload = this.authService.verifyToken(token);
 
     if (payload.type !== requiredType) {
-      throw new UnauthorizedException(`Expected ${requiredType} token`);
+      throw new UnauthorizedException(`Expected ${requiredType}`);
     }
 
     const user = await this.userService.getUserByEmail(payload.email);
