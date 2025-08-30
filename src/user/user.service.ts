@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
-import { QueryRunner, Repository } from 'typeorm';
+import { In, QueryRunner, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PinoLogger } from 'nestjs-pino';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -77,5 +77,22 @@ export class UserService {
     }
 
     return true;
+  }
+
+  async validateUserIds(userIds: string[], qr?: QueryRunner) {
+    const repository = this.getRepository(qr);
+
+    const exsitingUsers = await repository.find({
+      where: { id: In(userIds) },
+      select: { id: true },
+    });
+
+    const exsitingUserIds = exsitingUsers.map((user) => user.id);
+
+    const invalidUserIds = userIds.filter((userId) => !exsitingUserIds.includes(userId));
+
+    if (invalidUserIds.length > 0) {
+      throw new BadRequestException({ message: 'Invalid User IDs', invalidUserIds });
+    }
   }
 }

@@ -17,6 +17,9 @@ import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import { WsExecptionFilter } from './filter/ws-exception.filter';
 import { CreateMessageDto } from './message/dto/create-message.dto';
 import { MessageService } from './message/message.service';
+import { ChatRoomMember } from './entity/chatroom-member.entity';
+import { QueryRunner } from 'typeorm';
+import { MessageType } from './message/entity/message.entity';
 
 @WebSocketGateway({ namespace: 'chats' })
 @UseFilters(WsExecptionFilter)
@@ -51,6 +54,8 @@ export class ChatGateway implements OnGatewayConnection {
       client.user = user;
 
       this.logger.info({ clientId: client.id }, 'Client connection established');
+
+      client.join(`user:${user.id}`);
 
       return true;
     } catch (err) {
@@ -97,5 +102,31 @@ export class ChatGateway implements OnGatewayConnection {
       message: message.content,
       createdAt: message.createdAt,
     });
+  }
+
+  async notifyInvitation(
+    roomId: string,
+    inviter: User,
+    newMembers: ChatRoomMember[],
+    qr?: QueryRunner
+  ) {
+    const messageContent = `User ${inviter.username} invited ${newMembers
+      .map((m) => m.user.username)
+      .join(', ')}`;
+
+    const systemMessage = await this.messageService.createMessage(
+      { roomId, content: messageContent, type: MessageType.SYSTEM },
+      undefined,
+      qr
+    );
+
+    for (const member of newMembers) {
+      this.server.to(`user:${member.userId}`).emit('chatroom:invited', {
+        roomId,
+        inviter: inviter.username,
+      });
+    }
+
+    this.server.to(roomId).emit('chatroom:system', systemMessage);
   }
 }

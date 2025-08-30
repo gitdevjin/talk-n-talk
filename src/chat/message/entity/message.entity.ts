@@ -3,6 +3,11 @@ import { BaseEntity } from 'src/common/entity/base.entity';
 import { User } from 'src/user/entity/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
+export enum MessageType {
+  TEXT = 'text',
+  SYSTEM = 'system',
+}
+
 @Entity()
 export class Message extends BaseEntity {
   @Column()
@@ -12,13 +17,16 @@ export class Message extends BaseEntity {
   @JoinColumn({ name: 'roomId' })
   chatRoom: ChatRoom;
 
-  @Column()
-  senderId: string;
+  @Column({ type: 'uuid', nullable: true })
+  senderId?: string;
 
-  @ManyToOne(() => User, (user) => user.messages)
+  @ManyToOne(() => User, (user) => user.messages, { nullable: true })
   @JoinColumn({ name: 'senderId' })
-  sender: User;
+  sender?: User;
 
   @Column()
   content: string;
+
+  @Column({ type: 'enum', enum: MessageType, default: MessageType.TEXT })
+  type: MessageType;
 }

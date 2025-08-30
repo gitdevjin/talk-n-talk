@@ -1,6 +1,6 @@
 import { PickType } from '@nestjs/mapped-types';
 import { ChatRoom } from '../entity/chatroom.entity';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class CreateGroupChatDto extends PickType(ChatRoom, ['roomname']) {
   @IsString()

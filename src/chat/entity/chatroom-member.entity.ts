@@ -2,6 +2,7 @@ import { User } from 'src/user/entity/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { ChatRoom } from './chatroom.entity';
 import { BaseEntity } from 'src/common/entity/base.entity';
+import { Type } from 'class-transformer';
 
 @Entity('ChatRoomMembers')
 export class ChatRoomMember extends BaseEntity {
@@ -17,5 +18,6 @@ export class ChatRoomMember extends BaseEntity {
 
   @ManyToOne(() => User, (user) => user.chatrooms, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
+  @Type(() => User) // This is for class-transformer e.g.) @Exclude({toPlainOnly:true})
   user: User;
 }

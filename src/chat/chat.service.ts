@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { DataSource, EntityTarget, In, QueryRunner, Repository } from 'typeorm';
 import { ChatRoom } from './entity/chatroom.entity';
@@ -6,11 +6,19 @@ import { ChatRoomMember } from './entity/chatroom-member.entity';
 import { CreateGroupChatDto } from './dto/create-chatroom.dto';
 import { User } from 'src/user/entity/user.entity';
 import { PinoLogger } from 'nestjs-pino';
+import { UserService } from 'src/user/user.service';
+
+interface AddChatRoomMemberArgs {
+  roomId: string;
+  memberIds: string[];
+  inviterId: string;
+}
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly dataSource: DataSource,
+    private readonly userService: UserService,
     private readonly logger: PinoLogger
   ) {}
 
@@ -63,8 +71,8 @@ export class ChatService {
     return newChatRoom;
   }
 
-  async isChatMember(userId: string, roomId: string) {
-    const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember);
+  async isChatMember(userId: string, roomId: string, qr?: QueryRunner) {
+    const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember, qr);
 
     return await roomMemberRepository.exists({
       where: {
@@ -72,5 +80,47 @@ export class ChatService {
         roomId,
       },
     });
+  }
+
+  async addChatRoomMember(args: AddChatRoomMemberArgs, qr?: QueryRunner) {
+    const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember, qr);
+    const userRepository = this.getRepository<User>(User, qr);
+
+    const isInviterValid = await this.isChatMember(args.inviterId, args.roomId, qr);
+
+    if (!isInviterValid) {
+      throw new ForbiddenException('Inviter is not a member of this room');
+    }
+
+    // Check if the memberIds are valid
+    await this.userService.validateUserIds(args.memberIds, qr);
+
+    //Check duplicate memberIds and exclude them
+    const users = await userRepository.find({
+      where: {
+        id: In(args.memberIds),
+      },
+    });
+
+    const existingMembers = await roomMemberRepository.find({
+      where: { roomId: args.roomId, userId: In(args.memberIds) },
+      select: ['userId'],
+    });
+
+    const existingMemberIds = existingMembers.map((m) => m.userId);
+    const newUsers = users.filter((user) => !existingMemberIds.includes(user.id));
+
+    // Create member objects
+    const members = newUsers.map((user) => {
+      return roomMemberRepository.create({
+        roomId: args.roomId,
+        userId: user.id,
+        user, // for preload
+      });
+    });
+
+    const newMembers = await roomMemberRepository.save(members);
+
+    return newMembers;
   }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -16,7 +16,7 @@ import jwtConfig from './config/jwt.config';
 import authConfig from './config/auth.config';
 import { ChatRoom } from './chat/entity/chatroom.entity';
 import { ChatRoomMember } from './chat/entity/chatroom-member.entity';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { GlobalTokenGuard } from './auth/guard/global-token.guard';
 import { Message } from './chat/message/entity/message.entity';
 
@@ -64,6 +64,10 @@ import { Message } from './chat/message/entity/message.entity';
     {
       provide: APP_GUARD,
       useClass: GlobalTokenGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
     },
   ],
 })

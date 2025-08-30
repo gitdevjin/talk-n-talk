@@ -1,10 +1,11 @@
+import { Exclude } from 'class-transformer';
 import { ChatRoomMember } from 'src/chat/entity/chatroom-member.entity';
 import { Message } from 'src/chat/message/entity/message.entity';
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { Profile } from 'src/profile/entity/profile.entity';
 import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 
-export enum RolesEnum {
+export enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
 }
@@ -15,6 +16,7 @@ export class User extends BaseEntity {
   email: string;
 
   @Column()
+  @Exclude({ toPlainOnly: true })
   password: string;
 
   @Column({ unique: true })
@@ -22,10 +24,10 @@ export class User extends BaseEntity {
 
   @Column({
     type: 'enum',
-    enum: Object.values(RolesEnum),
-    default: RolesEnum.USER,
+    enum: UserRole,
+    default: UserRole.USER,
   })
-  role: RolesEnum;
+  role: UserRole;
 
   @Column({ nullable: true })
   refreshToken: string;

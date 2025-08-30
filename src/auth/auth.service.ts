@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { JwtConfig } from 'src/config/jwt.config';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { RolesEnum, User } from 'src/user/entity/user.entity';
+import { User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { AuthConfig } from 'src/config/auth.config';
