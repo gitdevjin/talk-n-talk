@@ -18,7 +18,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Headers('authorization') authHeader: string
   ) {
-    const base64String = this.authService.extractTokenFromHeader(authHeader, 'basic');
+    const base64String = this.authService.extractTokenFromHeader(authHeader);
 
     const credentials = this.authService.decodeBasicToken(base64String);
 

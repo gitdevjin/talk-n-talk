@@ -58,39 +58,32 @@ describe('AuthService Testing', () => {
   });
 
   describe('extractTokenFromHeader function', () => {
-    it('bearer token should be extracted correctly', () => {
-      const scheme = 'bearer';
-      const token = '1234#1234$';
-      const result = authService.extractTokenFromHeader(`${scheme} ${token}`, 'bearer');
-      expect(result).toBe(token);
-    });
-
     it('basic token should be extracted correctly', () => {
       const scheme = 'basic';
       const token = '!@#$#abcd';
-      const result = authService.extractTokenFromHeader(`${scheme} ${token}`, 'basic');
+      const result = authService.extractTokenFromHeader(`${scheme} ${token}`);
       expect(result).toBe(token);
     });
 
     it('Token Scheme should be case-insensitive', () => {
       const scheme = 'Basic';
       const token = '!@#$#abcd';
-      const result = authService.extractTokenFromHeader(`${scheme} ${token}`, `basic`);
+      const result = authService.extractTokenFromHeader(`${scheme} ${token}`);
       expect(result).toBe(token);
     });
 
     it('Scheme Mismatch Should throw Error', () => {
-      const scheme = 'Bearer';
+      const scheme = 'wrongBearer';
       const token = '!@#$#abcd';
-      expect(() => authService.extractTokenFromHeader(`${scheme} ${token}`, 'basic')).toThrow(
+      expect(() => authService.extractTokenFromHeader(`${scheme} ${token}`)).toThrow(
         BadRequestException
       );
     });
 
     it('Authorization Header of Wrong Format Should throw Error', () => {
-      const scheme = 'Bearer';
+      const scheme = 'Basic';
       const token = '!@#$#abcd';
-      expect(() => authService.extractTokenFromHeader(`${scheme} ${token} asdf`, 'bearer')).toThrow(
+      expect(() => authService.extractTokenFromHeader(`${scheme} ${token} asdfgh`)).toThrow(
         BadRequestException
       );
     });

@@ -31,6 +31,9 @@ export class UserService {
       },
       relations: {
         profile: true,
+        chatrooms: {
+          room: true,
+        },
       },
     });
   }

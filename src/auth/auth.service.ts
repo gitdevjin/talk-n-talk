@@ -28,7 +28,7 @@ export class AuthService {
     private readonly configService: ConfigService
   ) {}
 
-  extractTokenFromHeader(authHeader: string, expectedScheme: 'bearer' | 'basic') {
+  extractTokenFromHeader(authHeader: string) {
     const splitAuthHeader = authHeader.split(' ');
 
     if (splitAuthHeader.length !== 2) {
@@ -37,7 +37,7 @@ export class AuthService {
 
     const [scheme, token] = splitAuthHeader;
 
-    if (scheme.toLowerCase() !== expectedScheme) {
+    if (scheme.toLowerCase() !== 'basic') {
       throw new BadRequestException('Invalid authentication scheme');
     }
 

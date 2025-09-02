@@ -26,13 +26,7 @@ export class GlobalTokenGuard implements CanActivate {
       return true;
     }
 
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      throw new UnauthorizedException('BearerToken is Required');
-    }
-
-    const token = this.authService.extractTokenFromHeader(authHeader, 'bearer');
+    const token = req.cookies?.accessToken;
     const payload = this.authService.verifyToken(token);
 
     if (payload.type !== requiredType) {

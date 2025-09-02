@@ -20,6 +20,7 @@ import { MessageService } from './message/message.service';
 import { ChatRoomMember } from './entity/chatroom-member.entity';
 import { QueryRunner } from 'typeorm';
 import { MessageType } from './message/entity/message.entity';
+import * as cookieParser from 'cookie-parser';
 
 @WebSocketGateway({ namespace: 'chats' })
 @UseFilters(WsExecptionFilter)
@@ -39,15 +40,16 @@ export class ChatGateway implements OnGatewayConnection {
   async handleConnection(client: Socket & { user: User }) {
     this.logger.info({ clientId: client.id }, 'Connection request received');
 
-    const authHeader = client.handshake.headers.authorization;
+    const cookies = client.handshake.headers.cookie;
+    const parsedCookies = cookies ? cookieParser.parse(cookies) : {};
+    const token = parsedCookies.accessToken;
 
-    if (!authHeader) {
+    if (!token) {
       client.disconnect();
-      throw new WsException('Authorization Header is missing');
+      throw new WsException('AccessToken is missing in cookie');
     }
 
     try {
-      const token = this.authService.extractTokenFromHeader(authHeader, 'bearer');
       const payload = this.authService.verifyToken(token);
       const user = await this.userService.getUserByEmail(payload.email);
 

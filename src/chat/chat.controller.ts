@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseInterceptors } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CreateGroupChatDto } from './dto/create-chatroom.dto';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction.interceptor';
@@ -16,7 +16,7 @@ export class ChatController {
     private readonly chatGateway: ChatGateway
   ) {}
 
-  @Post('create/group')
+  @Post('group')
   @UseInterceptors(TransactionInterceptor)
   postCreateGroupChat(
     @Body() body: CreateGroupChatDto,
@@ -48,4 +48,7 @@ export class ChatController {
 
     return { status: 'success', added: newMembers.length };
   }
+
+  @Get('dms')
+  async getAllDms() {}
 }
