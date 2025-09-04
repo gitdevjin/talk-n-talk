@@ -71,6 +71,8 @@ export class ChatService {
     return newChatRoom;
   }
 
+  async createDM() {}
+
   async isChatMember(userId: string, roomId: string, qr?: QueryRunner) {
     const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember, qr);
 
