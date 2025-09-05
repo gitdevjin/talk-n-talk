@@ -49,6 +49,16 @@ export class ChatController {
     return { status: 'success', added: newMembers.length };
   }
 
+  // Create Direct Message with a user(doesn't have to be a friend)
+  @Post('/dms/:friendId')
+  @UseInterceptors(TransactionInterceptor)
+  async postCreateDm(
+    @Param('friendId') friendId: string,
+    @CurrentUser() user: User,
+    @TxQueryRunner() qr: QueryRunner
+  ) {}
+
+  // Get Direct Message list for one user
   @Get('dms')
   async getAllDms() {}
 }

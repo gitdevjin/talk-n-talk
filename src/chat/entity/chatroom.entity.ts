@@ -11,7 +11,7 @@ export class ChatRoom extends BaseEntity {
   @Column()
   isGroup: boolean;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   dmKey?: string;
 
   @OneToMany(() => ChatRoomMember, (chatRoomMember) => chatRoomMember.room, { cascade: ['insert'] })

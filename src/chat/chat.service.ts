@@ -71,7 +71,47 @@ export class ChatService {
     return newChatRoom;
   }
 
-  async createDM() {}
+  async createDM(creator: User, friendId: string, qr?: QueryRunner) {
+    const chatRoomRepository = this.getRepository(ChatRoom, qr);
+    const userRepostiroy = this.getRepository(User, qr);
+
+    const friend = await userRepostiroy.findOne({
+      where: {
+        id: friendId,
+      },
+    });
+
+    if (!friend) {
+      throw new BadRequestException("The user doesn't exist");
+    }
+
+    const sortedIds = [creator.id, friendId].sort();
+    const dmKey = `${sortedIds[0]}_${sortedIds[1]}`;
+
+    const existingDm = chatRoomRepository.findOne({
+      where: {
+        dmKey: dmKey,
+        isGroup: false,
+      },
+      relations: {
+        members: {
+          user: true,
+        },
+      },
+    });
+
+    if (existingDm) {
+      return existingDm;
+    }
+
+    const newDm = chatRoomRepository.create({
+      isGroup: false,
+      dmKey,
+      members: [{ user: creator }, { user: friend }],
+    });
+
+    return await chatRoomRepository.save(newDm);
+  }
 
   async isChatMember(userId: string, roomId: string, qr?: QueryRunner) {
     const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember, qr);
