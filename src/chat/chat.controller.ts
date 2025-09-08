@@ -8,6 +8,8 @@ import { CurrentUser } from 'src/user/decorator/user.decorator';
 import { User } from 'src/user/entity/user.entity';
 import { AddChatRoomMemberDto } from './dto/add-chatroom-member';
 import { ChatGateway } from './chat.gateway';
+import { MessageService } from './message/message.service';
+import { MessageType } from './message/entity/message.entity';
 
 @Controller('chats')
 export class ChatController {
@@ -35,16 +37,16 @@ export class ChatController {
     @CurrentUser() user: User,
     @TxQueryRunner() qr: QueryRunner
   ) {
-    const newMembers = await this.chatService.addChatRoomMember(
+    const { newMembers, systemMessage } = await this.chatService.addChatRoomMember(
       {
         roomId,
         memberIds: body.memberIds,
-        inviterId: user.id,
+        inviter: user,
       },
       qr
     );
 
-    await this.chatGateway.notifyInvitation(roomId, user, newMembers, qr);
+    await this.chatGateway.notifyInvitation(roomId, user, newMembers, systemMessage);
 
     return { status: 'success', added: newMembers.length };
   }
@@ -56,7 +58,10 @@ export class ChatController {
     @Param('friendId') friendId: string,
     @CurrentUser() user: User,
     @TxQueryRunner() qr: QueryRunner
-  ) {}
+  ) {
+    const { dm, friend, systemMessage } = await this.chatService.createDM(user, friendId);
+    await this.chatGateway.notifyDirectMessage(dm.id, user, friend, systemMessage);
+  }
 
   // Get Direct Message list for one user
   @Get('dms')

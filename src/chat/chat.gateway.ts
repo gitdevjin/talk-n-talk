@@ -19,7 +19,7 @@ import { CreateMessageDto } from './message/dto/create-message.dto';
 import { MessageService } from './message/message.service';
 import { ChatRoomMember } from './entity/chatroom-member.entity';
 import { QueryRunner } from 'typeorm';
-import { MessageType } from './message/entity/message.entity';
+import { Message, MessageType } from './message/entity/message.entity';
 import * as cookieParser from 'cookie-parser';
 
 @WebSocketGateway({ namespace: 'chats' })
@@ -110,18 +110,8 @@ export class ChatGateway implements OnGatewayConnection {
     roomId: string,
     inviter: User,
     newMembers: ChatRoomMember[],
-    qr?: QueryRunner
+    systemMessage: Message
   ) {
-    const messageContent = `User ${inviter.username} invited ${newMembers
-      .map((m) => m.user.username)
-      .join(', ')}`;
-
-    const systemMessage = await this.messageService.createMessage(
-      { roomId, content: messageContent, type: MessageType.SYSTEM },
-      undefined,
-      qr
-    );
-
     for (const member of newMembers) {
       this.server.to(`user:${member.userId}`).emit('chatroom:invited', {
         roomId,
@@ -129,6 +119,15 @@ export class ChatGateway implements OnGatewayConnection {
       });
     }
 
-    this.server.to(roomId).emit('chatroom:system', systemMessage);
+    this.server.to(roomId).emit('chatroom:system', systemMessage.content);
+  }
+
+  async notifyDirectMessage(roomId: string, inviter: User, friend: User, systemMessage: Message) {
+    this.server.to(`user:${friend.id}`).emit(`dm:invited`, {
+      roomId,
+      inviter: inviter.username,
+    });
+
+    this.server.to(roomId).emit('dm:system', systemMessage.content);
   }
 }

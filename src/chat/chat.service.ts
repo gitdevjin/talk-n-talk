@@ -7,11 +7,13 @@ import { CreateGroupChatDto } from './dto/create-chatroom.dto';
 import { User } from 'src/user/entity/user.entity';
 import { PinoLogger } from 'nestjs-pino';
 import { UserService } from 'src/user/user.service';
+import { MessageService } from './message/message.service';
+import { MessageType } from './message/entity/message.entity';
 
 interface AddChatRoomMemberArgs {
   roomId: string;
   memberIds: string[];
-  inviterId: string;
+  inviter: User;
 }
 
 @Injectable()
@@ -19,6 +21,7 @@ export class ChatService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
+    private readonly messageService: MessageService,
     private readonly logger: PinoLogger
   ) {}
 
@@ -88,7 +91,7 @@ export class ChatService {
     const sortedIds = [creator.id, friendId].sort();
     const dmKey = `${sortedIds[0]}_${sortedIds[1]}`;
 
-    const existingDm = chatRoomRepository.findOne({
+    const existingDm = await chatRoomRepository.findOne({
       where: {
         dmKey: dmKey,
         isGroup: false,
@@ -101,16 +104,30 @@ export class ChatService {
     });
 
     if (existingDm) {
-      return existingDm;
+      return { dm: existingDm, friend: friend };
     }
 
-    const newDm = chatRoomRepository.create({
-      isGroup: false,
-      dmKey,
-      members: [{ user: creator }, { user: friend }],
-    });
+    const newDm = await chatRoomRepository.save(
+      chatRoomRepository.create({
+        isGroup: false,
+        dmKey,
+        members: [{ user: creator }, { user: friend }],
+      })
+    );
 
-    return await chatRoomRepository.save(newDm);
+    const messageContent = `Direct message started between ${creator.username} and ${friend.username}`;
+
+    const systemMessage = await this.messageService.createMessage(
+      { roomId: newDm.id, content: messageContent, type: MessageType.SYSTEM },
+      undefined,
+      qr
+    );
+
+    return {
+      dm: newDm,
+      friend: friend,
+      systemMessage,
+    };
   }
 
   async isChatMember(userId: string, roomId: string, qr?: QueryRunner) {
@@ -128,7 +145,7 @@ export class ChatService {
     const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember, qr);
     const userRepository = this.getRepository<User>(User, qr);
 
-    const isInviterValid = await this.isChatMember(args.inviterId, args.roomId, qr);
+    const isInviterValid = await this.isChatMember(args.inviter.id, args.roomId, qr);
 
     if (!isInviterValid) {
       throw new ForbiddenException('Inviter is not a member of this room');
@@ -161,8 +178,18 @@ export class ChatService {
       });
     });
 
+    const messageContent = `User ${args.inviter.username} invited ${members
+      .map((m) => m.user.username)
+      .join(', ')}`;
+
+    const systemMessage = await this.messageService.createMessage(
+      { roomId: args.roomId, content: messageContent, type: MessageType.SYSTEM },
+      undefined,
+      qr
+    );
+
     const newMembers = await roomMemberRepository.save(members);
 
-    return newMembers;
+    return { newMembers, systemMessage };
   }
 }
