@@ -8,7 +8,7 @@
       "type": "node",
       "request": "launch",
       "name": "Debug NestJs Program",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "/usr/local/bin/npm",
       "runtimeArgs": ["run", "start:debug"],
       "console": "integratedTerminal",
       "restart": true,

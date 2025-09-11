@@ -32,6 +32,46 @@ export class ChatService {
     return qr ? qr.manager.getRepository<T>(entity) : this.dataSource.getRepository<T>(entity);
   }
 
+  async getGroupChatsForUser(user: User) {
+    const chatRoomRepository = this.getRepository(ChatRoom);
+
+    const groupChats = await chatRoomRepository.find({
+      where: {
+        isGroup: true,
+        members: {
+          userId: user.id,
+        },
+      },
+    });
+
+    return groupChats;
+  }
+
+  async getDirectMessagesForUser(user: User) {
+    const chatRoomRepository = this.getRepository(ChatRoom);
+
+    const dms = await chatRoomRepository.find({
+      where: {
+        isGroup: false,
+        members: {
+          userId: user.id,
+        },
+      },
+    });
+
+    const dmsWithFriend = await chatRoomRepository.find({
+      where: {
+        id: In(dms.map((dm) => dm.id)),
+      },
+      relations: {
+        members: {
+          user: true,
+        },
+      },
+    });
+    return dmsWithFriend;
+  }
+
   async createGroupChat(dto: CreateGroupChatDto, creator: User, qr?: QueryRunner) {
     const chatRoomRepository = this.getRepository(ChatRoom, qr);
     const userRepository = this.getRepository(User, qr);

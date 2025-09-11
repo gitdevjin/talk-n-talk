@@ -18,6 +18,11 @@ export class ChatController {
     private readonly chatGateway: ChatGateway
   ) {}
 
+  @Get('group')
+  getAllGroupChats(@CurrentUser() user: User) {
+    return this.chatService.getGroupChatsForUser(user);
+  }
+
   @Post('group')
   @UseInterceptors(TransactionInterceptor)
   postCreateGroupChat(
@@ -59,11 +64,19 @@ export class ChatController {
     @CurrentUser() user: User,
     @TxQueryRunner() qr: QueryRunner
   ) {
-    const { dm, friend, systemMessage } = await this.chatService.createDM(user, friendId);
-    await this.chatGateway.notifyDirectMessage(dm.id, user, friend, systemMessage);
+    const { dm, friend, systemMessage } = await this.chatService.createDM(user, friendId, qr);
+    console.log(systemMessage);
+    if (systemMessage) {
+      await this.chatGateway.notifyDirectMessage(dm.id, user, friend, systemMessage);
+      return { status: 'success', added: `${friend.username}` };
+    } else {
+      return { status: 'success', message: 'already have dm with the friend' };
+    }
   }
 
   // Get Direct Message list for one user
   @Get('dms')
-  async getAllDms() {}
+  async getAllDms(@CurrentUser() user: User) {
+    return await this.chatService.getDirectMessagesForUser(user);
+  }
 }

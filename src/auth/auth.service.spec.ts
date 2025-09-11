@@ -53,6 +53,10 @@ describe('AuthService Testing', () => {
     authService = module.get<AuthService>(AuthService);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('authService should be defined', () => {
     expect(authService).toBeDefined();
   });
@@ -86,6 +90,77 @@ describe('AuthService Testing', () => {
       expect(() => authService.extractTokenFromHeader(`${scheme} ${token} asdfgh`)).toThrow(
         BadRequestException
       );
+    });
+  });
+
+  describe('signToken function', () => {
+    it('should call jwtService.sign with correct arguments when creating an access token', () => {
+      (mockJwtService.sign as jest.Mock).mockReturnValue('mockTestResult');
+
+      const token = authService['signToken'](
+        { email: 'test@test.com', id: 'testRandomUserId' },
+        'access'
+      );
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        {
+          email: 'test@test.com',
+          sub: 'testRandomUserId',
+          type: 'access',
+        },
+        {
+          secret: 'secret-string',
+          expiresIn: '1h',
+        }
+      );
+
+      expect(token).toBe('mockTestResult');
+    });
+
+    it('should call jwtService.sign with correct arguments when creating an refresh token', () => {
+      (mockJwtService.sign as jest.Mock).mockReturnValue('mockTestResult');
+
+      const token = authService['signToken'](
+        { email: 'test@test.com', id: 'testRandomUserId' },
+        'refresh'
+      );
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        {
+          email: 'test@test.com',
+          sub: 'testRandomUserId',
+          type: 'refresh',
+        },
+        {
+          secret: 'secret-string',
+          expiresIn: '7d',
+        }
+      );
+
+      expect(token).toBe('mockTestResult');
+    });
+  });
+
+  describe('generateToken', () => {
+    it('should call signToken for both access and refresh tokens', () => {
+      const user = { email: 'test@test.com', id: 'fakeUserId' };
+
+      const signTokenSpy = jest
+        .spyOn(authService as any, 'signToken')
+        .mockImplementation((user, type) =>
+          type === 'access' ? 'mockAccessToken' : 'mockRefreshToken'
+        );
+
+      const tokens = authService['generateTokens'](user);
+
+      expect(signTokenSpy).toHaveBeenCalledTimes(2);
+      expect(signTokenSpy).toHaveBeenCalledWith(user, 'access');
+      expect(signTokenSpy).toHaveBeenCalledWith(user, 'refresh');
+
+      expect(tokens).toEqual({
+        accessToken: 'mockAccessToken',
+        refreshToken: 'mockRefreshToken',
+      });
     });
   });
 });
