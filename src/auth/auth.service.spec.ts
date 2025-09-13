@@ -4,6 +4,7 @@ import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 
 describe('AuthService Testing', () => {
   let authService: AuthService;
@@ -18,7 +19,7 @@ describe('AuthService Testing', () => {
       updateRefreshToken: jest.fn(),
     };
 
-    mockJwtService = { sign: jest.fn() };
+    mockJwtService = { sign: jest.fn(), verify: jest.fn() };
 
     mockConfigService = {
       get: jest.fn((key: string) => {
@@ -54,7 +55,8 @@ describe('AuthService Testing', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.resetAllMocks(); // resets manual mocks (calls, return values)
+    jest.restoreAllMocks(); // restores original implementations for spies
   });
 
   it('authService should be defined', () => {
@@ -161,6 +163,79 @@ describe('AuthService Testing', () => {
         accessToken: 'mockAccessToken',
         refreshToken: 'mockRefreshToken',
       });
+    });
+  });
+
+  describe('verifyToken', () => {
+    it('should return decoded payload when token is valid', () => {
+      const token = 'fakeToken';
+      const decodedPayload = { email: 'test@test.com', sub: 'fakeUserId', type: 'access' };
+
+      (mockJwtService.verify as jest.Mock).mockReturnValue(decodedPayload);
+
+      const result = authService.verifyToken(token);
+
+      expect(result).toEqual(decodedPayload);
+      expect(mockConfigService.get).toHaveBeenCalledWith('jwt');
+      expect(mockJwtService.verify).toHaveBeenCalledWith(token, { secret: 'secret-string' });
+    });
+
+    //probably I should add a test for catching error
+  });
+
+  describe('registerWithEmail', () => {
+    it('should hash the password and create a new user', async () => {
+      const userDto = { email: 'test@test.com', username: 'testUser', password: 'testPassword' };
+      const hashedPwd = 'fakeHash';
+      const createdUser = { id: 'fakeUserId', username: 'testUser', email: 'test@test.com' };
+
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue(hashedPwd);
+
+      mockUserService.createUser.mockResolvedValue(createdUser);
+
+      const result = await authService.registerWithEmail(userDto);
+
+      expect(mockConfigService.get).toHaveBeenCalledWith('auth');
+      expect(bcrypt.hash).toHaveBeenCalledWith('testPassword', 10);
+      expect(mockUserService.createUser).toHaveBeenCalledWith(
+        { ...userDto, password: hashedPwd },
+        undefined
+      );
+
+      expect(result).toEqual(createdUser);
+    });
+  });
+  describe('authenticateUser', () => {
+    it('should return the user if email exists and password is correct', async () => {
+      const userInput = { email: 'test@test.com', password: 'plainPassword' };
+      const userRecord = { email: 'test@test.com', password: 'hashedPassword' };
+
+      mockUserService.getUserByEmail.mockResolvedValue(userRecord);
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+
+      const result = await authService['authenticateUser'](userInput);
+
+      expect(mockUserService.getUserByEmail).toHaveBeenCalledWith(userInput.email);
+      expect(bcrypt.compare).toHaveBeenCalledWith(userInput.password, userRecord.password);
+      expect(result).toEqual(userRecord);
+    });
+
+    it('should throw UnauthorizedException if email does not exist', async () => {
+      const userInput = { email: 'test@test.com', password: 'plainPassword' };
+
+      mockUserService.getUserByEmail.mockResolvedValue(null);
+
+      await expect(authService['authenticateUser'](userInput)).rejects.toThrow('Invalid email');
+    });
+
+    it('should throw UnauthorizedException if password is incorrect', async () => {
+      const userInput = { email: 'test@test.com', password: 'wrongPassword' };
+      const userRecord = { email: 'test@test.com', password: 'hashedPassword' };
+
+      mockUserService.getUserByEmail.mockResolvedValue(userRecord);
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
+
+      await expect(authService['authenticateUser'](userInput)).rejects.toThrow('Invalid password');
     });
   });
 });

@@ -67,6 +67,12 @@ export class AuthService {
     });
   }
 
+  /**
+   * Generates a pair of JWT access and refresh tokens for a user.
+   *
+   * @param user - The user object containing at least email and id
+   * @returns An object containing accessToken and refreshToken strings
+   */
   private generateTokens(user: Pick<User, 'email' | 'id'>) {
     return {
       accessToken: this.signToken(user, 'access'),
@@ -130,7 +136,7 @@ export class AuthService {
     const userRecord = await this.userService.getUserByEmail(user.email);
 
     if (!userRecord) {
-      throw new UnauthorizedException('Invalid Email');
+      throw new UnauthorizedException('Invalid email');
     }
 
     const isPasswordValid = await bcrypt.compare(user.password, userRecord.password);
@@ -168,6 +174,16 @@ export class AuthService {
     return { ...tokens, cookieOptions };
   }
 
+  /**
+   * Decodes a base64-encoded Basic authentication credential into email and password.
+   *
+   * Expects the decoded string to be in the format "email:password".
+   * Throws an UnauthorizedException if the format is invalid or if either field is empty.
+   *
+   * @param base64Credential - The base64-encoded "email:password" string from the Authorization header
+   * @returns An object containing the extracted email and password
+   * @throws UnauthorizedException if the format is invalid or fields are missing
+   */
   decodeBasicToken(base64Credential: string) {
     const decodedCredential = Buffer.from(base64Credential, 'base64').toString('utf8');
 
