@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService Testing', () => {
@@ -236,6 +236,71 @@ describe('AuthService Testing', () => {
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
 
       await expect(authService['authenticateUser'](userInput)).rejects.toThrow('Invalid password');
+    });
+  });
+
+  describe('loginWithEmail', () => {
+    it('should call authenticateUser and return tokens with cookieOptions', async () => {
+      const mockUser = { id: 'fakeId', email: 'test@test.com' };
+      const mockToken = { accessToken: 'mockAccessToken', refreshToken: 'mockRefreshToken' };
+
+      authService['authenticateUser'] = jest.fn().mockResolvedValue(mockUser);
+      authService['generateTokens'] = jest.fn().mockReturnValue(mockToken);
+
+      const result = await authService.loginWithEmail({
+        email: 'test@test.com',
+        password: 'testPassword',
+      });
+
+      expect(authService['authenticateUser']).toHaveBeenCalledWith({
+        email: 'test@test.com',
+        password: 'testPassword',
+      });
+
+      expect(mockUserService.updateRefreshToken).toHaveBeenCalledWith(
+        mockUser.id,
+        mockToken.refreshToken
+      );
+
+      expect(result).toEqual({
+        ...mockToken,
+        cookieOptions: expect.objectContaining({
+          httpOnly: true,
+          secure: false,
+          sameSite: 'lax',
+          maxAge: expect.any(Number),
+        }),
+      });
+    });
+  });
+
+  describe('decodeBasicToken', () => {
+    it('should decode valid base64 credentials', () => {
+      const email = 'test@example.com';
+      const password = 'testPassword';
+      const base64 = Buffer.from(`${email}:${password}`).toString('base64');
+
+      const result = authService.decodeBasicToken(base64);
+
+      expect(result).toEqual({ email, password });
+    });
+
+    it('should throw if missing colon separator', () => {
+      const base64 = Buffer.from('invalidStrings').toString('base64');
+
+      expect(() => authService.decodeBasicToken(base64)).toThrow(UnauthorizedException);
+    });
+
+    it('should throw if email is empty', () => {
+      const base64 = Buffer.from(':password').toString('base64');
+
+      expect(() => authService.decodeBasicToken(base64)).toThrow(UnauthorizedException);
+    });
+
+    it('should throw if password is empty', () => {
+      const base64 = Buffer.from('test@example.com:').toString('base64');
+
+      expect(() => authService.decodeBasicToken(base64)).toThrow(UnauthorizedException);
     });
   });
 });

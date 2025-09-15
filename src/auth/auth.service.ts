@@ -191,7 +191,7 @@ export class AuthService {
 
     if (separatorIdx === -1) {
       throw new UnauthorizedException(
-        'Invalid Basic authentication format. Expected "email:password".'
+        'Invalid Basic authentication format. Expected "email:password"'
       );
     }
 
@@ -199,7 +199,7 @@ export class AuthService {
     const password = decodedCredential.slice(separatorIdx + 1);
 
     if (!email || !password) {
-      throw new UnauthorizedException('Email or password cannot be empty in Basic authentication.');
+      throw new UnauthorizedException('Email or password cannot be empty in Basic authentication');
     }
 
     return { email, password };
