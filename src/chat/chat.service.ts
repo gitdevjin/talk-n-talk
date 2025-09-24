@@ -32,6 +32,23 @@ export class ChatService {
     return qr ? qr.manager.getRepository<T>(entity) : this.dataSource.getRepository<T>(entity);
   }
 
+  async getGroupChatMembers(roomId: string) {
+    const chatRoomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember);
+
+    const members = await chatRoomMemberRepository.find({
+      where: {
+        roomId,
+      },
+      relations: {
+        user: true,
+      },
+    });
+
+    console.log(members);
+
+    return members;
+  }
+
   async getGroupChatsForUser(user: User) {
     const chatRoomRepository = this.getRepository(ChatRoom);
 

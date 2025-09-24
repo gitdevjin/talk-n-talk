@@ -8,8 +8,6 @@ import { CurrentUser } from 'src/user/decorator/user.decorator';
 import { User } from 'src/user/entity/user.entity';
 import { AddChatRoomMemberDto } from './dto/add-chatroom-member';
 import { ChatGateway } from './chat.gateway';
-import { MessageService } from './message/message.service';
-import { MessageType } from './message/entity/message.entity';
 
 @Controller('chats')
 export class ChatController {
@@ -21,6 +19,17 @@ export class ChatController {
   @Get('group')
   getAllGroupChats(@CurrentUser() user: User) {
     return this.chatService.getGroupChatsForUser(user);
+  }
+
+  @Get('group/:roomId/members')
+  getAllMembersForGroupChat(@Param('roomId') roomId: string) {
+    return this.chatService.getGroupChatMembers(roomId);
+  }
+
+  // Get Direct Message list for one user
+  @Get('dms')
+  async getAllDms(@CurrentUser() user: User) {
+    return await this.chatService.getDirectMessagesForUser(user);
   }
 
   @Post('group')
@@ -72,11 +81,5 @@ export class ChatController {
     } else {
       return { status: 'success', message: 'already have dm with the friend' };
     }
-  }
-
-  // Get Direct Message list for one user
-  @Get('dms')
-  async getAllDms(@CurrentUser() user: User) {
-    return await this.chatService.getDirectMessagesForUser(user);
   }
 }

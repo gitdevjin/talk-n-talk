@@ -30,6 +30,7 @@ export class User extends BaseEntity {
   role: UserRole;
 
   @Column({ nullable: true })
+  @Exclude({ toPlainOnly: true })
   refreshToken: string;
 
   @OneToOne(() => Profile, (profile) => profile.user)

@@ -18,11 +18,16 @@ import { WsExecptionFilter } from './filter/ws-exception.filter';
 import { CreateMessageDto } from './message/dto/create-message.dto';
 import { MessageService } from './message/message.service';
 import { ChatRoomMember } from './entity/chatroom-member.entity';
-import { QueryRunner } from 'typeorm';
-import { Message, MessageType } from './message/entity/message.entity';
-import * as cookieParser from 'cookie-parser';
+import { Message } from './message/entity/message.entity';
+import * as cookie from 'cookie';
 
-@WebSocketGateway({ namespace: 'chats' })
+@WebSocketGateway({
+  namespace: 'chats',
+  cors: {
+    origin: 'http://localhost:3001',
+    credentials: true,
+  },
+})
 @UseFilters(WsExecptionFilter)
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class ChatGateway implements OnGatewayConnection {
@@ -38,10 +43,8 @@ export class ChatGateway implements OnGatewayConnection {
   server: Server;
 
   async handleConnection(client: Socket & { user: User }) {
-    this.logger.info({ clientId: client.id }, 'Connection request received');
-
     const cookies = client.handshake.headers.cookie;
-    const parsedCookies = cookies ? cookieParser.parse(cookies) : {};
+    const parsedCookies = cookies ? cookie.parse(cookies) : {};
     const token = parsedCookies.accessToken;
 
     if (!token) {
@@ -74,13 +77,16 @@ export class ChatGateway implements OnGatewayConnection {
   ) {
     const isMember = await this.chatService.isChatMember(client.user.id, body.roomId);
 
+    console.log('join called?');
     if (!isMember) {
       this.logger.warn({ clientId: client.id, roomId: body.roomId }, 'Joining ChatRoom Failed');
       throw new WsException(`Unauthroized to join this room`);
     }
 
     client.join(body.roomId);
+
     this.logger.info({ clientId: client.id, roomId: body.roomId }, 'Client Joined ChatRoom');
+    console.log('joined!');
 
     return { status: 'success', roomId: body.roomId };
   }
