@@ -7,6 +7,8 @@ import { QueryRunner } from 'typeorm';
 import { Response } from 'express';
 import { AccessTokenType } from 'src/common/decorator/access-type.decorator';
 import * as ms from 'ms';
+import { CurrentUser } from 'src/user/decorator/user.decorator';
+import { User } from 'src/user/entity/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -28,7 +30,7 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, cookieOptions);
     res.cookie('accessToken', accessToken, {
       ...cookieOptions,
-      maxAge: ms('1h'),
+      maxAge: ms('1m'),
     });
 
     return { accessToken };
@@ -39,5 +41,19 @@ export class AuthController {
   @UseInterceptors(TransactionInterceptor)
   postRegisterWithEmail(@Body() body: CreateUserDto, @TxQueryRunner() qr: QueryRunner) {
     return this.authService.registerWithEmail(body, qr);
+  }
+
+  @Post('refresh')
+  @AccessTokenType('refresh')
+  async postRefreshToken(@Res({ passthrough: true }) res: Response, @CurrentUser() user: User) {
+    const { accessToken, refreshToken, cookieOptions } = await this.authService.refreshTokens(user);
+
+    res.cookie('refreshToken', refreshToken, cookieOptions);
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
+      maxAge: ms('1m'),
+    });
+
+    return { accessToken };
   }
 }

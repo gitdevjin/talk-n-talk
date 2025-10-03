@@ -157,21 +157,11 @@ export class AuthService {
    */
   async loginWithEmail(user: Pick<User, 'email' | 'password'>) {
     const userRecord = await this.authenticateUser(user);
+    return this.issueTokensAndCookies(userRecord);
+  }
 
-    const tokens = this.generateTokens(userRecord);
-
-    await this.userService.updateRefreshToken(userRecord.id, tokens.refreshToken);
-
-    const ttl = this.configService.get<JwtConfig>('jwt').refreshTokenTtl;
-
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: ms(ttl as ms.StringValue),
-    };
-
-    return { ...tokens, cookieOptions };
+  async refreshTokens(user: User) {
+    return this.issueTokensAndCookies(user);
   }
 
   /**
@@ -203,5 +193,22 @@ export class AuthService {
     }
 
     return { email, password };
+  }
+
+  private async issueTokensAndCookies(user: User) {
+    const tokens = this.generateTokens(user);
+
+    const ttl = this.configService.get<JwtConfig>('jwt').refreshTokenTtl;
+
+    const cookieOptions: CookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: ms(ttl as ms.StringValue),
+    };
+
+    await this.userService.updateRefreshToken(user.id, tokens.refreshToken);
+
+    return { ...tokens, cookieOptions };
   }
 }

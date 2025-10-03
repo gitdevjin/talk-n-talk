@@ -43,7 +43,7 @@ export class ChatController {
   }
 
   // add memeber to room
-  @Post('/invite/:roomId/members')
+  @Post('invite/:roomId/members')
   @UseInterceptors(TransactionInterceptor)
   async postAddChatRoomMebers(
     @Param('roomId') roomId: string,
@@ -66,7 +66,8 @@ export class ChatController {
   }
 
   // Create Direct Message with a user(doesn't have to be a friend)
-  @Post('/dms/:friendId')
+  // this nees to be fixed, the logic check if the room eixsts should be changed
+  @Post('dms/:friendId')
   @UseInterceptors(TransactionInterceptor)
   async postCreateDm(
     @Param('friendId') friendId: string,
@@ -81,5 +82,11 @@ export class ChatController {
     } else {
       return { status: 'success', message: 'already have dm with the friend' };
     }
+  }
+
+  //Get All messages for a chatroom
+  @Get(':roomId/messages')
+  async getMessages(@Param(`roomId`) roomId: string, @CurrentUser() user: User) {
+    return this.chatService.getAllMessagesForChat(roomId, user);
   }
 }

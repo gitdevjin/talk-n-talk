@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { DataSource, EntityTarget, In, QueryRunner, Repository } from 'typeorm';
 import { ChatRoom } from './entity/chatroom.entity';
@@ -8,7 +13,7 @@ import { User } from 'src/user/entity/user.entity';
 import { PinoLogger } from 'nestjs-pino';
 import { UserService } from 'src/user/user.service';
 import { MessageService } from './message/message.service';
-import { MessageType } from './message/entity/message.entity';
+import { Message, MessageType } from './message/entity/message.entity';
 
 interface AddChatRoomMemberArgs {
   roomId: string;
@@ -248,5 +253,37 @@ export class ChatService {
     const newMembers = await roomMemberRepository.save(members);
 
     return { newMembers, systemMessage };
+  }
+
+  async getAllMessagesForChat(roomId: string, user: User) {
+    const chatRoomRepository = this.getRepository<ChatRoom>(ChatRoom);
+    const messageRepository = this.getRepository<Message>(Message);
+
+    const chatroom = await chatRoomRepository.findOne({
+      where: {
+        id: roomId,
+      },
+      relations: {
+        members: true,
+      },
+    });
+
+    if (!chatroom) {
+      throw new NotFoundException('Chatroom not found');
+    }
+
+    // Check if the user is a member
+    const isMember = chatroom.members.some((m) => m.userId === user.id);
+    if (!isMember) {
+      throw new ForbiddenException('User is not a member of the chat');
+    }
+
+    // Fetch messages
+    const messages = await messageRepository.find({
+      where: { roomId },
+      order: { createdAt: 'ASC' },
+    });
+
+    return messages;
   }
 }

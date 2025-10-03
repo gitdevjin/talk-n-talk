@@ -48,8 +48,10 @@ export class ChatGateway implements OnGatewayConnection {
     const token = parsedCookies.accessToken;
 
     if (!token) {
+      this.logger.warn({ clientId: client.id }, 'Missing access token — disconnecting client');
+      client.emit('authError', { message: 'Access token missing or expired' });
       client.disconnect();
-      throw new WsException('AccessToken is missing in cookie');
+      return; // ✅ Stop here, do not throw
     }
 
     try {
@@ -77,7 +79,6 @@ export class ChatGateway implements OnGatewayConnection {
   ) {
     const isMember = await this.chatService.isChatMember(client.user.id, body.roomId);
 
-    console.log('join called?');
     if (!isMember) {
       this.logger.warn({ clientId: client.id, roomId: body.roomId }, 'Joining ChatRoom Failed');
       throw new WsException(`Unauthroized to join this room`);
@@ -86,7 +87,6 @@ export class ChatGateway implements OnGatewayConnection {
     client.join(body.roomId);
 
     this.logger.info({ clientId: client.id, roomId: body.roomId }, 'Client Joined ChatRoom');
-    console.log('joined!');
 
     return { status: 'success', roomId: body.roomId };
   }
@@ -104,12 +104,10 @@ export class ChatGateway implements OnGatewayConnection {
     //Save Message in DB
     const message = await this.messageService.createMessage(body, client.user);
 
+    this.logger.info({ clientId: client.id, content: body.content }, 'Client Sent New Message');
+
     // Boradcast Messages
-    client.to(body.roomId).emit(`receiveMessage`, {
-      sender: message.senderId,
-      message: message.content,
-      createdAt: message.createdAt,
-    });
+    this.server.to(body.roomId).emit(`receiveMessage`, message);
   }
 
   async notifyInvitation(

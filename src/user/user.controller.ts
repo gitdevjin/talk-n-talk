@@ -23,4 +23,8 @@ export class UserController {
   getUser(@CurrentUser() user: User) {
     return this.userService.getUserByEmail(user.email);
   }
+
+  @Post('friends')
+  @AccessTokenType('access')
+  postAddFriend(@CurrentUser() user: User, @Body('friendId') friendId: string) {}
 }

@@ -19,6 +19,7 @@ import { ChatRoomMember } from './chat/entity/chatroom-member.entity';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { GlobalTokenGuard } from './auth/guard/global-token.guard';
 import { Message } from './chat/message/entity/message.entity';
+import { Friendship } from './user/entity/friendship.entity';
 
 @Module({
   imports: [
@@ -48,7 +49,7 @@ import { Message } from './chat/message/entity/message.entity';
           url: dbConfig.url,
           ssl: dbConfig.ssl,
           synchronize: dbConfig.synchronize,
-          entities: [User, Profile, ChatRoom, ChatRoomMember, Message],
+          entities: [User, Profile, ChatRoom, ChatRoomMember, Message, Friendship],
         };
       },
     }),

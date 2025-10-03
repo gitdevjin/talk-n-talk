@@ -26,7 +26,7 @@ export class GlobalTokenGuard implements CanActivate {
       return true;
     }
 
-    const token = req.cookies?.accessToken;
+    const token = requiredType === 'access' ? req.cookies?.accessToken : req.cookies?.refreshToken;
     const payload = this.authService.verifyToken(token);
 
     if (payload.type !== requiredType) {

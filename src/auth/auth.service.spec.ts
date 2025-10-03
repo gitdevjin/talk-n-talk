@@ -205,6 +205,7 @@ describe('AuthService Testing', () => {
       expect(result).toEqual(createdUser);
     });
   });
+
   describe('authenticateUser', () => {
     it('should return the user if email exists and password is correct', async () => {
       const userInput = { email: 'test@test.com', password: 'plainPassword' };

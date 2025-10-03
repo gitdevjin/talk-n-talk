@@ -4,6 +4,7 @@ import { Message } from 'src/chat/message/entity/message.entity';
 import { BaseEntity } from 'src/common/entity/base.entity';
 import { Profile } from 'src/profile/entity/profile.entity';
 import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
+import { Friendship } from './friendship.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -41,4 +42,10 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Message, (message) => message.sender)
   messages: Message[];
+
+  @OneToMany(() => Friendship, (friendship) => friendship.requester)
+  outgoingFriendship: Friendship;
+
+  @OneToMany(() => Friendship, (friendship) => friendship.receiver)
+  incomingFriendship: Friendship;
 }

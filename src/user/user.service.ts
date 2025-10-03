@@ -35,6 +35,14 @@ export class UserService {
     });
   }
 
+  async getUserById(userId: string) {
+    return this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+  }
+
   async createUser(createUserDto: CreateUserDto, qr?: QueryRunner) {
     const repository = this.getRepository(qr);
     const { email, username, password } = createUserDto;
