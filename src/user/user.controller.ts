@@ -1,15 +1,18 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PinoLogger } from 'nestjs-pino';
 import { AccessTokenType } from 'src/common/decorator/access-type.decorator';
 import { CurrentUser } from './decorator/user.decorator';
 import { User } from './entity/user.entity';
+import { FriendshipService } from './friendship.service';
+import { FriendshipStatus } from './entity/friendship.entity';
 
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
+    private readonly friendshipService: FriendshipService,
     private readonly logger: PinoLogger
   ) {}
 
@@ -25,6 +28,16 @@ export class UserController {
   }
 
   @Post('friends')
-  @AccessTokenType('access')
-  postAddFriend(@CurrentUser() user: User, @Body('friendId') friendId: string) {}
+  postFriendRequest(@CurrentUser() user: User, @Body('friendId') friendId: string) {
+    return this.friendshipService.createFriendship(user, friendId);
+  }
+
+  @Patch('friends/:id')
+  patchUpdateFriendRequest(
+    @CurrentUser() user: User,
+    @Param('id') friendshipId: string,
+    @Body('status') status: FriendshipStatus
+  ) {
+    return this.friendshipService.updateFriendship(user, friendshipId, status);
+  }
 }

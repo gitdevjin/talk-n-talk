@@ -6,6 +6,7 @@ export enum FriendshipStatus {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
   BLOCKED = 'blocked',
+  DECLINED = 'declined',
 }
 
 @Entity('friendships')
@@ -27,7 +28,7 @@ export class Friendship extends BaseEntity {
   friendshipKey: string;
 
   @ManyToOne(() => User, (user) => user.outgoingFriendship)
-  @JoinColumn({ name: 'registerId' })
+  @JoinColumn({ name: 'requesterId' })
   requester: User;
 
   @ManyToOne(() => User, (user) => user.incomingFriendship)
@@ -37,7 +38,7 @@ export class Friendship extends BaseEntity {
   @BeforeInsert()
   @BeforeUpdate()
   setFriendshipKey() {
-    const ids = [this.requester.id, this.receiver.id].sort();
+    const ids = [this.requesterId, this.receiverId].sort();
     this.friendshipKey = `${ids[0]}_${ids[1]}`;
   }
 }
