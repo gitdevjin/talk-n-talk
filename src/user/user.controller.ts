@@ -40,4 +40,9 @@ export class UserController {
   ) {
     return this.friendshipService.updateFriendship(user, friendshipId, status);
   }
+
+  @Get('friends')
+  getFriends(@CurrentUser() user: User) {
+    return this.friendshipService.getAllFriends(user);
+  }
 }

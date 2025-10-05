@@ -34,6 +34,22 @@ export class FriendshipService {
     return qr ? qr.manager.getRepository<Friendship>(Friendship) : this.friendshipRepository;
   }
 
+  async getAllFriends(user: User) {
+    const friendships = await this.friendshipRepository.find({
+      where: [
+        {
+          receiverId: user.id,
+          status: FriendshipStatus.ACCEPTED,
+        },
+        { requesterId: user.id, status: FriendshipStatus.ACCEPTED },
+      ],
+      relations: ['requester', 'receiver'],
+    });
+    const friends = friendships.map((f) => (f.requesterId === user.id ? f.receiver : f.requester));
+
+    return friends;
+  }
+
   // send friendship request
   async createFriendship(user: User, friendId: string) {
     //validate friendId by searching the user of the id
