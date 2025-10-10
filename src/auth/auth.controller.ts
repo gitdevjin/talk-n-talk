@@ -1,4 +1,4 @@
-import { Body, Controller, Headers, Post, Res, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, Post, Res, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction.interceptor';
@@ -34,6 +34,14 @@ export class AuthController {
     });
 
     return { accessToken };
+  }
+
+  @Post('logout')
+  @HttpCode(200)
+  async postLogout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    return { message: 'Logged out successfully' };
   }
 
   @Post('register/email')
