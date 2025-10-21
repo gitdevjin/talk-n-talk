@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
-import { In, QueryRunner, Repository } from 'typeorm';
+import { In, Like, QueryRunner, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PinoLogger } from 'nestjs-pino';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -110,5 +110,15 @@ export class UserService {
     if (invalidUserIds.length > 0) {
       throw new BadRequestException({ message: 'Invalid User IDs', invalidUserIds });
     }
+  }
+
+  async getAllUsersByUsername(username: string) {
+    const users = await this.userRepository.find({
+      where: {
+        username: Like(`%${username}%`),
+      },
+    });
+
+    return users;
   }
 }

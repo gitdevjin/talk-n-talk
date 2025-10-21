@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PinoLogger } from 'nestjs-pino';
@@ -27,6 +27,11 @@ export class UserController {
     return this.userService.getUserByEmail(user.email);
   }
 
+  @Get('search')
+  getSearchUsersForFriendship(@CurrentUser() user: User, @Query('username') username: string) {
+    return this.friendshipService.searchUsersWithFriendStatus(user, username);
+  }
+
   @Post('friends')
   postFriendRequest(@CurrentUser() user: User, @Body('friendId') friendId: string) {
     return this.friendshipService.createFriendship(user, friendId);
@@ -45,4 +50,10 @@ export class UserController {
   getFriends(@CurrentUser() user: User) {
     return this.friendshipService.getAllFriends(user);
   }
+
+  @Get('friends/requests/incoming')
+  getIncomingFriendRquests(@CurrentUser() user: User) {}
+
+  @Get('friends/requests/outgoing')
+  getOutgoingFriendRquests(@CurrentUser() user: User) {}
 }

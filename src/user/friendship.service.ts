@@ -135,6 +135,32 @@ export class FriendshipService {
     return this.friendshipRepository.save(friendship);
   }
 
+  async searchUsersWithFriendStatus(user: User, username: string) {
+    const users = await this.userService.getAllUsersByUsername(username);
+
+    const friendships = await this.friendshipRepository.find({
+      where: [{ requester: { id: user.id } }, { receiver: { id: user.id } }],
+      relations: ['requester', 'receiver'],
+    });
+
+    const statusMap = new Map<string, string>();
+
+    friendships.forEach((f) => {
+      const friendId = f.requester.id === user.id ? f.receiver.id : f.requester.id;
+      statusMap.set(friendId, f.status);
+    });
+
+    const result = users
+      .filter((u) => u.id !== user.id)
+      .map((u) => ({
+        id: u.id,
+        username: u.username,
+        status: statusMap.get(u.id) || 'none',
+      }));
+
+    return result;
+  }
+
   // decline friendship request
 
   // accept friendship request

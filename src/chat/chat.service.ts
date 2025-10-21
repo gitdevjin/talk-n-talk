@@ -281,6 +281,9 @@ export class ChatService {
     // Fetch messages
     const messages = await messageRepository.find({
       where: { roomId },
+      relations: {
+        sender: true,
+      },
       order: { createdAt: 'ASC' },
     });
 
