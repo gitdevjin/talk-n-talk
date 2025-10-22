@@ -117,6 +117,9 @@ export class UserService {
       where: {
         username: Like(`%${username}%`),
       },
+      relations: {
+        profile: true,
+      },
     });
 
     return users;

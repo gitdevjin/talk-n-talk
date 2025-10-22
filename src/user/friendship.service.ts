@@ -155,6 +155,7 @@ export class FriendshipService {
       .map((u) => ({
         id: u.id,
         username: u.username,
+        profile: u.profile,
         status: statusMap.get(u.id) || 'none',
       }));
 
