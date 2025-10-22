@@ -162,6 +162,34 @@ export class FriendshipService {
     return result;
   }
 
+  async getIncomingFriendships(user: User) {
+    const friendRequests = await this.friendshipRepository.find({
+      where: {
+        receiverId: user.id,
+        status: FriendshipStatus.PENDING,
+      },
+      relations: {
+        requester: true,
+      },
+    });
+
+    return friendRequests;
+  }
+
+  async getOutgoingFriendships(user: User) {
+    const friendRequests = await this.friendshipRepository.find({
+      where: {
+        requesterId: user.id,
+        status: FriendshipStatus.PENDING,
+      },
+      relations: {
+        receiver: true,
+      },
+    });
+
+    return friendRequests;
+  }
+
   // decline friendship request
 
   // accept friendship request

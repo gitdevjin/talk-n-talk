@@ -104,6 +104,8 @@ export class ChatGateway implements OnGatewayConnection {
     //Save Message in DB
     const message = await this.messageService.createMessage(body, client.user);
 
+    message.sender = client.user;
+
     this.logger.info({ clientId: client.id, content: body.content }, 'Client Sent New Message');
 
     // Boradcast Messages

@@ -52,8 +52,12 @@ export class UserController {
   }
 
   @Get('friends/requests/incoming')
-  getIncomingFriendRquests(@CurrentUser() user: User) {}
+  getIncomingFriendRquests(@CurrentUser() user: User) {
+    return this.friendshipService.getIncomingFriendships(user);
+  }
 
   @Get('friends/requests/outgoing')
-  getOutgoingFriendRquests(@CurrentUser() user: User) {}
+  getOutgoingFriendRquests(@CurrentUser() user: User) {
+    return this.friendshipService.getOutgoingFriendships(user);
+  }
 }
