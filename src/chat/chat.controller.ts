@@ -42,6 +42,11 @@ export class ChatController {
     return this.chatService.createGroupChat(body, user, qr);
   }
 
+  @Get('invite/:roomId/members')
+  getInviteCandidates(@CurrentUser() user: User, @Param('chatId') chatId: string) {
+    return this.chatService.getInviteCandidates(user, chatId);
+  }
+
   // add memeber to room
   @Post('invite/:roomId/members')
   @UseInterceptors(TransactionInterceptor)

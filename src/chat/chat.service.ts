@@ -14,6 +14,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { UserService } from 'src/user/user.service';
 import { MessageService } from './message/message.service';
 import { Message, MessageType } from './message/entity/message.entity';
+import { Friendship, FriendshipStatus } from 'src/user/entity/friendship.entity';
 
 interface AddChatRoomMemberArgs {
   roomId: string;
@@ -288,5 +289,35 @@ export class ChatService {
     });
 
     return messages;
+  }
+
+  async getInviteCandidates(user: User, chatId: string) {
+    const friendshipRepository = this.getRepository<Friendship>(Friendship);
+    const chatRepository = this.getRepository<ChatRoom>(ChatRoom);
+    // Get accepted friends
+    const friendships = await friendshipRepository.find({
+      where: [
+        { receiverId: user.id, status: FriendshipStatus.ACCEPTED },
+        { requesterId: user.id, status: FriendshipStatus.ACCEPTED },
+      ],
+      relations: ['requester', 'receiver'],
+    });
+
+    const friends = friendships.map((f) => (f.requesterId === user.id ? f.receiver : f.requester));
+
+    // Get chat members
+    const chat = await chatRepository.findOne({
+      where: { id: chatId },
+      relations: ['members'],
+    });
+    if (!chat) throw new NotFoundException('Chat not found');
+
+    const memberIds = new Set(chat.members.map((m) => m.id));
+
+    // Return friends + membership status
+    return friends.map((f) => ({
+      ...f,
+      status: memberIds.has(f.id) ? 'in_chat' : 'available',
+    }));
   }
 }
