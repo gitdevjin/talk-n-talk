@@ -291,32 +291,41 @@ export class ChatService {
     return messages;
   }
 
-  async getInviteCandidates(user: User, chatId: string) {
+  async getInviteCandidates(user: User, roomId: string) {
     const friendshipRepository = this.getRepository<Friendship>(Friendship);
-    const chatRepository = this.getRepository<ChatRoom>(ChatRoom);
-    // Get accepted friends
+    const roomMemberRepository = this.getRepository<ChatRoomMember>(ChatRoomMember);
+
+    console.log(roomId);
+    // 1. Get accepted friends
     const friendships = await friendshipRepository.find({
       where: [
         { receiverId: user.id, status: FriendshipStatus.ACCEPTED },
         { requesterId: user.id, status: FriendshipStatus.ACCEPTED },
       ],
-      relations: ['requester', 'receiver'],
+      relations: {
+        receiver: true,
+        requester: true,
+      },
     });
 
     const friends = friendships.map((f) => (f.requesterId === user.id ? f.receiver : f.requester));
 
-    // Get chat members
-    const chat = await chatRepository.findOne({
-      where: { id: chatId },
-      relations: ['members'],
+    console.log(friends);
+    // 2. Get chat members
+    const members = await roomMemberRepository.find({
+      where: { roomId },
     });
-    if (!chat) throw new NotFoundException('Chat not found');
 
-    const memberIds = new Set(chat.members.map((m) => m.id));
+    console.log(members);
 
-    // Return friends + membership status
+    const memberIds = new Set(members.map((m) => m.userId));
+
+    console.log('memberIDs', memberIds);
+
+    // 3. Return friends + membership status
     return friends.map((f) => ({
-      ...f,
+      id: f.id,
+      username: f.username,
       status: memberIds.has(f.id) ? 'in_chat' : 'available',
     }));
   }

@@ -43,8 +43,8 @@ export class ChatController {
   }
 
   @Get('invite/:roomId/members')
-  getInviteCandidates(@CurrentUser() user: User, @Param('chatId') chatId: string) {
-    return this.chatService.getInviteCandidates(user, chatId);
+  getInviteCandidates(@CurrentUser() user: User, @Param('roomId') roomId: string) {
+    return this.chatService.getInviteCandidates(user, roomId);
   }
 
   // add memeber to room
