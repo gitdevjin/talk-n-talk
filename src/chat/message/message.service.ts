@@ -14,17 +14,26 @@ export class MessageService {
     private readonly logger: PinoLogger
   ) {}
 
+  private getRepository(qr?: QueryRunner) {
+    return qr ? qr.manager.getRepository<Message>(Message) : this.messageRepository;
+  }
+
   async createMessage(dto: CreateMessageDto, sender?: User, qr?: QueryRunner) {
-    const message = await this.messageRepository.save({
-      ...dto,
-      senderId: sender?.id,
-    });
+    const messageRepository = this.getRepository(qr);
+    try {
+      const message = await messageRepository.save({
+        ...dto,
+        senderId: sender?.id,
+      });
 
-    this.logger.info(
-      { id: message.id, roomId: message.roomId, senderId: message.senderId },
-      'Message is Created'
-    );
+      this.logger.info(
+        { id: message.id, roomId: message.roomId, senderId: message.senderId },
+        'Message is Created'
+      );
 
-    return message;
+      return message;
+    } catch (e) {
+      console.log(e);
+    }
   }
 }

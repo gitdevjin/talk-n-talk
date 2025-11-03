@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PinoLogger } from 'nestjs-pino';
@@ -37,13 +37,18 @@ export class UserController {
     return this.friendshipService.createFriendship(user, friendId);
   }
 
-  @Patch('friends/:id')
+  @Patch('friends/requests/:id')
   patchUpdateFriendRequest(
     @CurrentUser() user: User,
     @Param('id') friendshipId: string,
     @Body('status') status: FriendshipStatus
   ) {
     return this.friendshipService.updateFriendship(user, friendshipId, status);
+  }
+
+  @Delete('friends/requests/:id')
+  deleteFriendRequest(@CurrentUser() user: User, @Param('id') friendshipId: string) {
+    return this.friendshipService.deleteFriendshipRequest(user, friendshipId);
   }
 
   @Get('friends')

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Friendship, FriendshipStatus } from './entity/friendship.entity';
-import { QueryRunner, Repository } from 'typeorm';
+import { In, QueryRunner, Repository } from 'typeorm';
 import { User } from './entity/user.entity';
 import { UserService } from './user.service';
 
@@ -166,7 +166,7 @@ export class FriendshipService {
     const friendRequests = await this.friendshipRepository.find({
       where: {
         receiverId: user.id,
-        status: FriendshipStatus.PENDING,
+        status: In([FriendshipStatus.PENDING, FriendshipStatus.DECLINED]),
       },
       relations: {
         requester: true,
@@ -190,10 +190,24 @@ export class FriendshipService {
     return friendRequests;
   }
 
-  // decline friendship request
+  // cancel friendship request
+  async deleteFriendshipRequest(user: User, requestId: string) {
+    const request = await this.friendshipRepository.findOne({
+      where: {
+        id: requestId,
+      },
+    });
 
-  // accept friendship request
+    if (!request) {
+      throw new NotFoundException('Friendship request not found');
+    }
 
+    if (request.requesterId !== user.id) {
+      throw new BadRequestException('You are not authorized to delete this request');
+    }
+
+    return await this.friendshipRepository.delete({ id: requestId });
+  }
   // delete friendship request
 
   // delete friendship (regardless of satatus)

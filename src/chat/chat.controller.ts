@@ -80,12 +80,17 @@ export class ChatController {
     @TxQueryRunner() qr: QueryRunner
   ) {
     const { dm, friend, systemMessage } = await this.chatService.createDM(user, friendId, qr);
+    console.log('fine here');
     console.log(systemMessage);
     if (systemMessage) {
-      await this.chatGateway.notifyDirectMessage(dm.id, user, friend, systemMessage);
-      return { status: 'success', added: `${friend.username}` };
+      try {
+        await this.chatGateway.notifyDirectMessage(dm.id, user, friend, systemMessage);
+      } catch (e) {
+        console.log(e);
+      }
+      return { status: 'success', dm, added: `${friend.username}` };
     } else {
-      return { status: 'success', message: 'already have dm with the friend' };
+      return { status: 'success', dm, message: 'already have dm with the friend' };
     }
   }
 
