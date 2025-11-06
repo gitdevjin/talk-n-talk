@@ -43,8 +43,17 @@ export class FriendshipService {
         },
         { requesterId: user.id, status: FriendshipStatus.ACCEPTED },
       ],
-      relations: ['requester', 'receiver'],
+      relations: {
+        requester: {
+          profile: true,
+        },
+        receiver: {
+          profile: true,
+        },
+      },
     });
+
+    console.log(friendships);
     const friends = friendships.map((f) => (f.requesterId === user.id ? f.receiver : f.requester));
 
     return friends;
@@ -208,7 +217,23 @@ export class FriendshipService {
 
     return await this.friendshipRepository.delete({ id: requestId });
   }
+
   // delete friendship request
+  async deleteFrined(user: User, friendId: string) {
+    const friendship = await this.friendshipRepository.findOne({
+      where: [
+        { requesterId: user.id, receiverId: friendId },
+        { requesterId: friendId, receiverId: user.id },
+      ],
+    });
+
+    if (!friendship) {
+      throw new NotFoundException('Friendship not found');
+    }
+
+    await this.friendshipRepository.remove(friendship);
+    return { message: 'Friend removed successfully' };
+  }
 
   // delete friendship (regardless of satatus)
 }

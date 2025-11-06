@@ -37,6 +37,11 @@ export class UserController {
     return this.friendshipService.createFriendship(user, friendId);
   }
 
+  @Delete('friends/:friendId')
+  deleteFriend(@CurrentUser() user: User, @Param('friendId') friendId: string) {
+    return this.friendshipService.deleteFrined(user, friendId);
+  }
+
   @Patch('friends/requests/:id')
   patchUpdateFriendRequest(
     @CurrentUser() user: User,

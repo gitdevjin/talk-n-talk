@@ -37,15 +37,15 @@ export class User extends BaseEntity {
   @OneToOne(() => Profile, (profile) => profile.user)
   profile: Profile;
 
-  @OneToMany(() => ChatRoomMember, (chatRoomMember) => chatRoomMember.user)
+  @OneToMany(() => ChatRoomMember, (chatRoomMember) => chatRoomMember.user, { cascade: true })
   chatrooms: ChatRoomMember[];
 
   @OneToMany(() => Message, (message) => message.sender)
   messages: Message[];
 
   @OneToMany(() => Friendship, (friendship) => friendship.requester)
-  outgoingFriendship: Friendship;
+  outgoingFriendship: Friendship[];
 
   @OneToMany(() => Friendship, (friendship) => friendship.receiver)
-  incomingFriendship: Friendship;
+  incomingFriendship: Friendship[];
 }
