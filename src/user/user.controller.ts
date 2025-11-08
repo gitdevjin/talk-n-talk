@@ -16,7 +16,7 @@ export class UserController {
     private readonly logger: PinoLogger
   ) {}
 
-  @Post() // This is just for test
+  @Post() // This Route is just for testing
   postCreateUser(@Body() body: CreateUserDto) {
     return this.userService.createUser(body);
   }
@@ -37,7 +37,7 @@ export class UserController {
     return this.friendshipService.createFriendship(user, friendId);
   }
 
-  @Delete('friends/:friendId')
+  @Delete('friends/:friendId') // Should I match this as post? like using body instead of parma?
   deleteFriend(@CurrentUser() user: User, @Param('friendId') friendId: string) {
     return this.friendshipService.deleteFrined(user, friendId);
   }

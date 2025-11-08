@@ -174,7 +174,7 @@ export class ChatService {
       chatRoomRepository.create({
         isGroup: false,
         dmKey,
-        members: [{ user: creator }, { user: friend }],
+        members: [{ user: creator }, { user: friend }], // inserting ChatRoomMember
       })
     );
 

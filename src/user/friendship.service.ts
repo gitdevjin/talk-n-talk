@@ -126,6 +126,7 @@ export class FriendshipService {
     });
 
     if (!friendship) throw new NotFoundException('Friend request not found');
+
     if (status === FriendshipStatus.BLOCKED) {
       if (friendship.receiverId !== user.id && friendship.requesterId !== user.id) {
         throw new ForbiddenException('Not allowed to block this user');
@@ -189,7 +190,7 @@ export class FriendshipService {
     const friendRequests = await this.friendshipRepository.find({
       where: {
         requesterId: user.id,
-        status: FriendshipStatus.PENDING,
+        status: In([FriendshipStatus.PENDING, FriendshipStatus.DECLINED]),
       },
       relations: {
         receiver: true,

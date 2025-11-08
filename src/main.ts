@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: process.env.TALK_AND_TALK_CLIENT_URL,
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
