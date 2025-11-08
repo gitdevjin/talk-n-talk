@@ -138,7 +138,6 @@ export class ChatService {
   }
 
   async createDM(creator: User, friendId: string, qr?: QueryRunner) {
-    console.log('createDM start');
     const chatRoomRepository = this.getRepository(ChatRoom, qr);
     const userRepostiroy = this.getRepository(User, qr);
 
@@ -148,7 +147,6 @@ export class ChatService {
       },
     });
 
-    console.log('friend retrieved');
     if (!friend) {
       throw new BadRequestException("The user doesn't exist");
     }
@@ -156,8 +154,6 @@ export class ChatService {
     const sortedIds = [creator.id, friendId].sort();
     const dmKey = `${sortedIds[0]}_${sortedIds[1]}`;
 
-    console.log('sorting problem?');
-    console.log(dmKey);
     const existingDm = await chatRoomRepository.findOne({
       where: {
         dmKey: dmKey,
@@ -169,7 +165,6 @@ export class ChatService {
         },
       },
     });
-    console.log(existingDm);
 
     if (existingDm) {
       return { dm: existingDm, friend: friend };
@@ -182,7 +177,6 @@ export class ChatService {
         members: [{ user: creator }, { user: friend }],
       })
     );
-    console.log(newDm);
 
     const messageContent = `Direct message started between ${creator.username} and ${friend.username}`;
 
@@ -193,9 +187,7 @@ export class ChatService {
       qr
     );
 
-    console.log(systemMessage);
-
-    console.log('before return');
+    this.logger.info('Direct Message Created', systemMessage);
 
     return {
       dm: newDm,

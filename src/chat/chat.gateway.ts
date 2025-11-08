@@ -24,7 +24,7 @@ import * as cookie from 'cookie';
 @WebSocketGateway({
   namespace: 'chats',
   cors: {
-    origin: 'http://localhost:3001',
+    origin: process.env.TALK_AND_TALK_CLIENT_URL,
     credentials: true,
   },
 })
@@ -51,7 +51,7 @@ export class ChatGateway implements OnGatewayConnection {
       this.logger.warn({ clientId: client.id }, 'Missing access token — disconnecting client');
       client.emit('authError', { message: 'Access token missing or expired' });
       client.disconnect();
-      return; // ✅ Stop here, do not throw
+      return; // Stop here, do not throw
     }
 
     try {
@@ -60,9 +60,9 @@ export class ChatGateway implements OnGatewayConnection {
 
       client.user = user;
 
-      this.logger.info({ clientId: client.id }, 'Client connection established');
-
       client.join(`user:${user.id}`);
+
+      this.logger.info({ clientId: client.id }, 'Client connection established');
 
       return true;
     } catch (err) {

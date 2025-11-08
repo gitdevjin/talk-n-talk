@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import { JwtConfig } from 'src/config/jwt.config';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entity/user.entity';

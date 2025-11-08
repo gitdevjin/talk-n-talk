@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Param,
+  Post,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CreateGroupChatDto } from './dto/create-chatroom.dto';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction.interceptor';
@@ -26,12 +34,6 @@ export class ChatController {
     return this.chatService.getGroupChatMembers(roomId);
   }
 
-  // Get Direct Message list for one user
-  @Get('dms')
-  async getAllDms(@CurrentUser() user: User) {
-    return await this.chatService.getDirectMessagesForUser(user);
-  }
-
   @Post('group')
   @UseInterceptors(TransactionInterceptor)
   postCreateGroupChat(
@@ -42,6 +44,7 @@ export class ChatController {
     return this.chatService.createGroupChat(body, user, qr);
   }
 
+  // maybe need to change route path name like `group/:roomId/invite`
   @Get('invite/:roomId/members')
   getInviteCandidates(@CurrentUser() user: User, @Param('roomId') roomId: string) {
     return this.chatService.getInviteCandidates(user, roomId);
@@ -70,6 +73,12 @@ export class ChatController {
     return { status: 'success', added: newMembers.length };
   }
 
+  // Get Direct Message list for one user
+  @Get('dms')
+  async getAllDms(@CurrentUser() user: User) {
+    return await this.chatService.getDirectMessagesForUser(user);
+  }
+
   // Create Direct Message with a user(doesn't have to be a friend)
   // this nees to be fixed, the logic check if the room eixsts should be changed
   @Post('dms/:friendId')
@@ -80,21 +89,22 @@ export class ChatController {
     @TxQueryRunner() qr: QueryRunner
   ) {
     const { dm, friend, systemMessage } = await this.chatService.createDM(user, friendId, qr);
-    console.log('fine here');
-    console.log(systemMessage);
+
     if (systemMessage) {
       try {
         await this.chatGateway.notifyDirectMessage(dm.id, user, friend, systemMessage);
       } catch (e) {
         console.log(e);
+        throw new InternalServerErrorException('Failed to create DM');
       }
+
       return { status: 'success', dm, added: `${friend.username}` };
     } else {
       return { status: 'success', dm, message: 'already have dm with the friend' };
     }
   }
 
-  //Get All messages for a chatroom
+  //Get All messages for a chatroom(group or dm)
   @Get(':roomId/messages')
   async getMessages(@Param(`roomId`) roomId: string, @CurrentUser() user: User) {
     return this.chatService.getAllMessagesForChat(roomId, user);
