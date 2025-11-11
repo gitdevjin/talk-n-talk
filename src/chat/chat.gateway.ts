@@ -125,7 +125,7 @@ export class ChatGateway implements OnGatewayConnection {
       });
     }
 
-    this.server.to(roomId).emit('chatroom:system', systemMessage.content);
+    this.server.to(roomId).emit('chatroom:system', systemMessage);
   }
 
   async notifyDirectMessage(roomId: string, inviter: User, friend: User, systemMessage: Message) {
