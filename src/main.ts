@@ -1,4 +1,4 @@
-/*** This should be on top of this page */
+/*** This should be on top of this page before AppModule is Imported */
 import * as dotenv from 'dotenv';
 dotenv.config();
 /***** */
