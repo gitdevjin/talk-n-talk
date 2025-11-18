@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Profile } from './entity/profile.entity';
 import { QueryRunner, Repository } from 'typeorm';
 import { User } from 'src/user/entity/user.entity';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class ProfileService {
@@ -21,5 +22,22 @@ export class ProfileService {
     });
 
     return await repository.save(profile);
+  }
+
+  async updateProfile(user: User, dto: UpdateProfileDto, qr?: QueryRunner) {
+    const repository = this.getRepository(qr);
+    const profile = await repository.findOne({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+    });
+
+    profile.name = dto.name;
+    profile.bio = dto.bio;
+    const updatedProfile = await repository.save(profile);
+
+    return updatedProfile;
   }
 }
