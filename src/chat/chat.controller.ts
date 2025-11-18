@@ -68,6 +68,7 @@ export class ChatController {
       qr
     );
 
+    console.log('invited on controller');
     await this.chatGateway.notifyInvitation(roomId, user, newMembers, systemMessage);
 
     return { status: 'success', added: newMembers.length };

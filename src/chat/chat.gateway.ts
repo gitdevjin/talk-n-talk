@@ -123,6 +123,7 @@ export class ChatGateway implements OnGatewayConnection {
         roomId,
         inviter: inviter.username,
       });
+      this.logger.info({ memberId: member.userId }, 'user invited');
     }
 
     this.server.to(roomId).emit('chatroom:system', systemMessage);
